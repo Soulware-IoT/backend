@@ -7,7 +7,7 @@ import site.soulware.cocina360.profiles.domain.model.aggregate.Profile;
 import site.soulware.cocina360.profiles.domain.model.command.UpdateProfileDetailsCommand;
 import site.soulware.cocina360.profiles.domain.model.valueobject.ProfileId;
 import site.soulware.cocina360.profiles.domain.repository.ProfileRepository;
-import site.soulware.cocina360.shared.domain.model.exception.EntityNotFoundException;
+import site.soulware.cocina360.profiles.domain.model.exception.ProfileNotFoundException;
 
 @Service
 @Transactional
@@ -32,6 +32,6 @@ public class ProfileCommandService {
 
     private Profile findOrThrow(ProfileId id) {
         return this.profileRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(Profile.class, id));
+                .orElseThrow(() -> ProfileNotFoundException.byId(id.value()));
     }
 }

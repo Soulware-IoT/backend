@@ -8,7 +8,7 @@ import site.soulware.cocina360.profiles.domain.model.query.GetProfileQuery;
 import site.soulware.cocina360.profiles.domain.model.valueobject.Email;
 import site.soulware.cocina360.profiles.domain.model.valueobject.ProfileId;
 import site.soulware.cocina360.profiles.domain.repository.ProfileRepository;
-import site.soulware.cocina360.shared.domain.model.exception.EntityNotFoundException;
+import site.soulware.cocina360.profiles.domain.model.exception.ProfileNotFoundException;
 
 @Service
 @Transactional(readOnly = true)
@@ -22,13 +22,13 @@ public class ProfileQueryService {
 
     public ProfileResult handle(GetProfileQuery query) {
         Profile profile = this.profileRepository.findById(ProfileId.of(query.profileId()))
-                .orElseThrow(() -> new EntityNotFoundException(Profile.class, query.profileId()));
+                .orElseThrow(() -> ProfileNotFoundException.byId(query.profileId()));
         return ProfileResult.from(profile);
     }
 
     public ProfileResult handle(GetProfileByEmailQuery query) {
         Profile profile = this.profileRepository.findByEmail(new Email(query.email()))
-                .orElseThrow(() -> new EntityNotFoundException(Profile.class, query.email()));
+                .orElseThrow(() -> ProfileNotFoundException.byEmail(query.email()));
         return ProfileResult.from(profile);
     }
 }

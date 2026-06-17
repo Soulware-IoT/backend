@@ -8,6 +8,6 @@ package site.soulware.cocina360.shared.domain.model.exception;
 public class BusinessRuleViolationException extends DomainException {
 
     public BusinessRuleViolationException(String rule) {
-        super("Business rule violated: " + rule);
+        super("error.business_rule.violated", rule);
     }
 }
