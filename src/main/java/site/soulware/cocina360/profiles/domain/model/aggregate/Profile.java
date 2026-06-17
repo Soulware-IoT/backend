@@ -35,9 +35,9 @@ public class Profile extends AggregateRoot<ProfileId> {
     }
 
     public void updateDetails(String fullName, String preferredName, String avatarUrl) {
-        this.fullName = requireFullName(fullName);
-        this.preferredName = normalizeOptional(preferredName);
-        this.avatarUrl = normalizeOptional(avatarUrl);
+        if (fullName != null) this.fullName = requireFullName(fullName);
+        if (preferredName != null) this.preferredName = normalizeOptional(preferredName);
+        if (avatarUrl != null) this.avatarUrl = normalizeOptional(avatarUrl);
         this.touch();
         this.registerEvent(new ProfileDetailsUpdated(this.id.value(), this.updatedAt));
     }

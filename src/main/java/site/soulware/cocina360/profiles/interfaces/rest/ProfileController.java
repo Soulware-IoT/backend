@@ -7,6 +7,8 @@ import site.soulware.cocina360.profiles.application.ProfileCommandService;
 import site.soulware.cocina360.profiles.application.ProfileQueryService;
 import site.soulware.cocina360.profiles.domain.model.query.GetProfileByEmailQuery;
 import site.soulware.cocina360.profiles.domain.model.query.GetProfileQuery;
+import site.soulware.cocina360.profiles.interfaces.rest.request.UpdateProfileDetailsRequest;
+import site.soulware.cocina360.profiles.interfaces.rest.response.ProfileResponse;
 
 import java.util.UUID;
 
@@ -36,7 +38,7 @@ public class ProfileController {
         );
     }
 
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")
     public ResponseEntity<ProfileResponse> updateDetails(
             @PathVariable UUID id,
             @RequestBody @Valid UpdateProfileDetailsRequest request) {
