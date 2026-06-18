@@ -42,7 +42,8 @@ Each business module follows this internal layering:
 <module>/
 ├── domain/
 │   ├── model/
-│   │   ├── aggregate/    ← aggregate roots and entities
+│   │   ├── aggregate/    ← aggregate roots only (extend AggregateRoot<ID> with AggregateId)
+│   │   ├── entity/       ← owned entities (extend Entity<ID> with EntityId; no repository, no own events)
 │   │   ├── valueobject/  ← value objects (records + @Embeddable)
 │   │   ├── event/        ← domain events (past-tense facts, records)
 │   │   ├── exception/    ← domain rule violations (extend DomainException)
@@ -64,6 +65,20 @@ Rules:
 - Controllers call the command service (void), then the query service to return the updated state — two round-trips accepted to keep CQRS boundaries clean.
 - HTTP controllers live in `interfaces/rest/`, not `infrastructure/`. Infrastructure is for JPA only.
 
+### Aggregate Roots vs Owned Entities
+
+Both live in the `aggregate/` package of their module, but they are structurally distinct:
+
+| | Aggregate Root | Owned Entity |
+|---|---|---|
+| Extends | `AggregateRoot<ID>` | `Entity<ID>` |
+| ID type | extends `AggregateId` | extends `EntityId` |
+| Has repository | yes | no — accessed only through its root |
+| Can exist alone | yes | no — only meaningful within its aggregate |
+| Publishes events | yes | no — mutations are events of the root |
+
+`AggregateId` and `EntityId` are both in `shared.domain.model.valueobject` and share the same UUID-based structure, but using the correct one makes the role of each class explicit.
+
 ### Shared Module (`shared/`)
 
 Base classes that all modules reuse, located at `site.soulware.cocina360.shared`:
@@ -82,6 +97,12 @@ Base classes that all modules reuse, located at `site.soulware.cocina360.shared`
 | `shared.infrastructure.rest.GlobalExceptionHandler` | `@RestControllerAdvice` — maps all exceptions to `ErrorResponse`; resolves messages via `MessageSource` |
 | `shared.infrastructure.rest.ErrorResponse` | Standard error envelope: `{ status, error, message, timestamp }` |
 | `shared.infrastructure.config.ValidationConfig` | Wires `LocalValidatorFactoryBean` to use the application `MessageSource` |
+
+### Cross-Context ID References
+
+When an aggregate in context A holds a reference to an aggregate that belongs to context B (i.e., stores its ID as a foreign key), that ID type must live in `shared.domain.model.valueobject` — not inside context B's own module. This keeps context A from importing context B's internal packages, preserving module boundary enforcement.
+
+IDs that are only used as a type's own identity (never held as a foreign key by another context) stay inside their own module's `domain.model.valueobject`.
 
 ### Exception Conventions
 
@@ -117,6 +138,21 @@ Authentication and authorization are **out of scope** for this service. An API g
 ## Coding Style
 
 - Always qualify instance field and method accesses with `this.` — this makes the scope of every reference explicit and reduces ambiguity for readers.
+- When a method declaration's parameter list is too long to fit on one line, break each parameter onto its own line, indented one tab beyond the method's access modifier. The closing `)` and opening `{` go on their own line at the access modifier's indentation level:
+
+```java
+public static ControlFormat rehydrate(
+    ControlFormatId id,
+    ControlProcessId processId,
+    String name,
+    ControlFormatStatus status,
+    List<FormatField> fields,
+    Instant createdAt,
+    Instant updatedAt
+) {
+    // body
+}
+```
 
 ## Environment Variables
 
