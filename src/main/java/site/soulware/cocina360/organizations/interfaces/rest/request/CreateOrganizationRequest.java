@@ -10,13 +10,11 @@ public record CreateOrganizationRequest(
         String imageUrl,
         String addressLineOne,
         String addressLineTwo,
-        String addressReference,
-        Double latitude,
-        Double longitude
+        String addressReference
 ) {
     public CreateOrganizationCommand toCommand(UUID requesterId) {
-        return new CreateOrganizationCommand(UUID.randomUUID(), this.name, this.imageUrl,
+        return new CreateOrganizationCommand(this.name, this.imageUrl,
                 this.addressLineOne, this.addressLineTwo, this.addressReference,
-                this.latitude, this.longitude, requesterId);
+                requesterId);
     }
 }

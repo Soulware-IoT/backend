@@ -51,7 +51,9 @@ Each business module follows this internal layering:
 │   │   └── query/        ← query records passed to query services
 │   └── repository/       ← repository interfaces (domain contracts, no impl)
 ├── application/          ← command and query services; orchestrates domain, publishes events
-├── infrastructure/       ← JPA entities/repos, repository adapters
+├── infrastructure/
+│   └── persistence/
+│       └── <resource>/   ← one sub-package per aggregate/resource; each contains its JpaEntity, JpaRepository, RepositoryAdapter, and any converters specific to that resource
 └── interfaces/
     └── rest/
         ├── request/      ← @RequestBody records (validation annotations live here)

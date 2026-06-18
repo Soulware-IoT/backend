@@ -2,7 +2,6 @@ package site.soulware.cocina360.organizations.domain.model.aggregate;
 
 import site.soulware.cocina360.organizations.domain.model.event.OrganizationCreated;
 import site.soulware.cocina360.organizations.domain.model.event.OrganizationUpdated;
-import site.soulware.cocina360.organizations.domain.model.valueobject.Location;
 import site.soulware.cocina360.shared.domain.model.aggregate.AggregateRoot;
 import site.soulware.cocina360.shared.domain.model.valueobject.OrganizationId;
 import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
@@ -17,7 +16,6 @@ public class Organization extends AggregateRoot<OrganizationId> {
     private String addressLineOne;
     private String addressLineTwo;
     private String addressReference;
-    private Location location;
     private final Instant createdAt;
     private final ProfileId createdBy;
     private Instant updatedAt;
@@ -31,7 +29,6 @@ public class Organization extends AggregateRoot<OrganizationId> {
         String addressLineOne,
         String addressLineTwo,
         String addressReference,
-        Location location,
         Instant createdAt,
         ProfileId createdBy,
         Instant updatedAt,
@@ -44,7 +41,6 @@ public class Organization extends AggregateRoot<OrganizationId> {
         this.addressLineOne = addressLineOne;
         this.addressLineTwo = addressLineTwo;
         this.addressReference = addressReference;
-        this.location = location;
         this.createdAt = createdAt;
         this.createdBy = createdBy;
         this.updatedAt = updatedAt;
@@ -59,13 +55,12 @@ public class Organization extends AggregateRoot<OrganizationId> {
         String addressLineOne,
         String addressLineTwo,
         String addressReference,
-        Location location,
         ProfileId createdBy,
         ProfileId ownedBy
     ) {
         Instant now = Instant.now();
         Organization org = new Organization(id, name, imageUrl, addressLineOne, addressLineTwo,
-                addressReference, location, now, createdBy, now, createdBy, ownedBy);
+                addressReference, now, createdBy, now, createdBy, ownedBy);
         org.registerEvent(new OrganizationCreated(id.value(), name, createdBy.value(), now));
         return org;
     }
@@ -77,7 +72,6 @@ public class Organization extends AggregateRoot<OrganizationId> {
         String addressLineOne,
         String addressLineTwo,
         String addressReference,
-        Location location,
         Instant createdAt,
         ProfileId createdBy,
         Instant updatedAt,
@@ -85,7 +79,7 @@ public class Organization extends AggregateRoot<OrganizationId> {
         ProfileId ownedBy
     ) {
         return new Organization(id, name, imageUrl, addressLineOne, addressLineTwo, addressReference,
-                location, createdAt, createdBy, updatedAt, updatedBy, ownedBy);
+                createdAt, createdBy, updatedAt, updatedBy, ownedBy);
     }
 
     public void update(
@@ -94,7 +88,6 @@ public class Organization extends AggregateRoot<OrganizationId> {
         String addressLineOne,
         String addressLineTwo,
         String addressReference,
-        Location location,
         ProfileId updatedBy
     ) {
         this.name = name;
@@ -102,7 +95,6 @@ public class Organization extends AggregateRoot<OrganizationId> {
         this.addressLineOne = addressLineOne;
         this.addressLineTwo = addressLineTwo;
         this.addressReference = addressReference;
-        this.location = location;
         this.updatedBy = updatedBy;
         this.updatedAt = Instant.now();
         this.registerEvent(new OrganizationUpdated(this.id.value(), this.updatedAt));
@@ -115,7 +107,6 @@ public class Organization extends AggregateRoot<OrganizationId> {
     public String getAddressLineOne() { return this.addressLineOne; }
     public String getAddressLineTwo() { return this.addressLineTwo; }
     public String getAddressReference() { return this.addressReference; }
-    public Location getLocation() { return this.location; }
     public Instant getCreatedAt() { return this.createdAt; }
     public ProfileId getCreatedBy() { return this.createdBy; }
     public Instant getUpdatedAt() { return this.updatedAt; }

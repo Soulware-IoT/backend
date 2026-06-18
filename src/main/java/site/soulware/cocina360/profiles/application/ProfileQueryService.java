@@ -6,8 +6,8 @@ import site.soulware.cocina360.profiles.domain.model.aggregate.Profile;
 import site.soulware.cocina360.profiles.domain.model.query.GetProfileByEmailQuery;
 import site.soulware.cocina360.profiles.domain.model.query.GetProfileQuery;
 import site.soulware.cocina360.profiles.domain.model.valueobject.Email;
-import site.soulware.cocina360.profiles.domain.model.valueobject.ProfileId;
 import site.soulware.cocina360.profiles.domain.repository.ProfileRepository;
+import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
 import site.soulware.cocina360.profiles.domain.model.exception.ProfileNotFoundException;
 
 @Service

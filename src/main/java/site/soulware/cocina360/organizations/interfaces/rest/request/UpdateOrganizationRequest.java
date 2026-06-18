@@ -10,13 +10,11 @@ public record UpdateOrganizationRequest(
         String imageUrl,
         String addressLineOne,
         String addressLineTwo,
-        String addressReference,
-        Double latitude,
-        Double longitude
+        String addressReference
 ) {
     public UpdateOrganizationCommand toCommand(UUID organizationId, UUID requesterId) {
         return new UpdateOrganizationCommand(organizationId, this.name, this.imageUrl,
                 this.addressLineOne, this.addressLineTwo, this.addressReference,
-                this.latitude, this.longitude, requesterId);
+                requesterId);
     }
 }

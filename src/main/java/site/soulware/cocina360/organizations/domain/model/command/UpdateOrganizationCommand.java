@@ -9,7 +9,5 @@ public record UpdateOrganizationCommand(
         String addressLineOne,
         String addressLineTwo,
         String addressReference,
-        Double latitude,
-        Double longitude,
         UUID requesterId
 ) {}

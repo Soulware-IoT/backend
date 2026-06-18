@@ -1,4 +1,4 @@
-package site.soulware.cocina360.profiles.infrastructure.persistence;
+package site.soulware.cocina360.profiles.infrastructure.persistence.profile;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

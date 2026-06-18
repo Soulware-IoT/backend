@@ -9,7 +9,6 @@ import site.soulware.cocina360.organizations.domain.model.command.CreateOrganiza
 import site.soulware.cocina360.organizations.domain.model.command.DeleteOrganizationCommand;
 import site.soulware.cocina360.organizations.domain.model.command.UpdateOrganizationCommand;
 import site.soulware.cocina360.organizations.domain.model.exception.OrganizationNotFoundException;
-import site.soulware.cocina360.organizations.domain.model.valueobject.Location;
 import site.soulware.cocina360.organizations.domain.model.valueobject.OrganizationMemberId;
 import site.soulware.cocina360.organizations.domain.repository.OrganizationMemberRepository;
 import site.soulware.cocina360.organizations.domain.repository.OrganizationRepository;
@@ -34,14 +33,13 @@ public class OrganizationCommandService {
         this.eventPublisher = eventPublisher;
     }
 
-    public void handle(CreateOrganizationCommand command) {
-        OrganizationId id = OrganizationId.of(command.organizationId());
+    public OrganizationId handle(CreateOrganizationCommand command) {
+        OrganizationId id = OrganizationId.generate();
         ProfileId requesterId = ProfileId.of(command.requesterId());
-        Location location = this.toLocation(command.latitude(), command.longitude());
 
         Organization org = Organization.create(id, command.name(), command.imageUrl(),
                 command.addressLineOne(), command.addressLineTwo(), command.addressReference(),
-                location, requesterId, requesterId);
+                requesterId, requesterId);
 
         this.organizationRepository.save(org);
         org.pullDomainEvents().forEach(this.eventPublisher::publishEvent);
@@ -49,14 +47,15 @@ public class OrganizationCommandService {
         OrganizationMember owner = OrganizationMember.createOwner(OrganizationMemberId.generate(), requesterId, id);
         this.memberRepository.save(owner);
         owner.pullDomainEvents().forEach(this.eventPublisher::publishEvent);
+
+        return id;
     }
 
     public void handle(UpdateOrganizationCommand command) {
         Organization org = this.findOrThrow(OrganizationId.of(command.organizationId()));
-        Location location = this.toLocation(command.latitude(), command.longitude());
 
         org.update(command.name(), command.imageUrl(), command.addressLineOne(),
-                command.addressLineTwo(), command.addressReference(), location,
+                command.addressLineTwo(), command.addressReference(),
                 ProfileId.of(command.requesterId()));
 
         this.organizationRepository.save(org);
@@ -71,9 +70,5 @@ public class OrganizationCommandService {
     private Organization findOrThrow(OrganizationId id) {
         return this.organizationRepository.findById(id)
                 .orElseThrow(() -> OrganizationNotFoundException.byId(id.value()));
-    }
-
-    private Location toLocation(Double latitude, Double longitude) {
-        return (latitude != null && longitude != null) ? new Location(latitude, longitude) : null;
     }
 }

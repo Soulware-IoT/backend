@@ -5,8 +5,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import site.soulware.cocina360.profiles.domain.model.aggregate.Profile;
 import site.soulware.cocina360.profiles.domain.model.command.UpdateProfileDetailsCommand;
-import site.soulware.cocina360.profiles.domain.model.valueobject.ProfileId;
 import site.soulware.cocina360.profiles.domain.repository.ProfileRepository;
+import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
 import site.soulware.cocina360.profiles.domain.model.exception.ProfileNotFoundException;
 
 @Service

@@ -32,14 +32,12 @@ public class OrganizationController {
     @PostMapping
     public ResponseEntity<OrganizationResponse> create(
         @RequestBody @Valid CreateOrganizationRequest request,
-        @RequestHeader("X-Requester-Id") UUID requesterId
+        @RequestHeader(name = "X-Requester-Id", required = true) UUID requesterId
     ) {
+        var organizationId = this.commandService.handle(request.toCommand(requesterId));
 
-        this.commandService.handle(request.toCommand(requesterId));
-
-        UUID organizationId = request.toCommand(requesterId).organizationId();
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(OrganizationResponse.from(this.queryService.handle(new GetOrganizationQuery(organizationId))));
+                .body(OrganizationResponse.from(this.queryService.handle(new GetOrganizationQuery(organizationId.value()))));
     }
 
     @GetMapping("/{id}")
@@ -54,7 +52,6 @@ public class OrganizationController {
         @RequestBody @Valid UpdateOrganizationRequest request,
         @RequestHeader("X-Requester-Id") UUID requesterId
     ) {
-
         this.commandService.handle(request.toCommand(id, requesterId));
 
         return ResponseEntity.ok(

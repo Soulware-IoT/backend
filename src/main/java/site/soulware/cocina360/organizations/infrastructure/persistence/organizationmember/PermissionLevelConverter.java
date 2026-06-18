@@ -1,4 +1,4 @@
-package site.soulware.cocina360.organizations.infrastructure.persistence.converter;
+package site.soulware.cocina360.organizations.infrastructure.persistence.organizationmember;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;

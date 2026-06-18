@@ -12,8 +12,6 @@ public record OrganizationResponse(
         String addressLineOne,
         String addressLineTwo,
         String addressReference,
-        Double latitude,
-        Double longitude,
         UUID ownedBy,
         UUID createdBy,
         Instant createdAt,
@@ -21,11 +19,9 @@ public record OrganizationResponse(
         Instant updatedAt
 ) {
     public static OrganizationResponse from(OrganizationResult result) {
-        Double latitude = result.location() != null ? result.location().latitude() : null;
-        Double longitude = result.location() != null ? result.location().longitude() : null;
         return new OrganizationResponse(result.id(), result.name(), result.imageUrl(),
                 result.addressLineOne(), result.addressLineTwo(), result.addressReference(),
-                latitude, longitude, result.ownedBy(), result.createdBy(), result.createdAt(),
+                result.ownedBy(), result.createdBy(), result.createdAt(),
                 result.updatedBy(), result.updatedAt());
     }
 }
