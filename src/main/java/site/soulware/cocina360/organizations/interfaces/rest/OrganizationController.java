@@ -11,6 +11,7 @@ import site.soulware.cocina360.organizations.domain.model.query.GetOrganizationQ
 import site.soulware.cocina360.organizations.interfaces.rest.request.CreateOrganizationRequest;
 import site.soulware.cocina360.organizations.interfaces.rest.request.UpdateOrganizationRequest;
 import site.soulware.cocina360.organizations.interfaces.rest.response.OrganizationResponse;
+import site.soulware.cocina360.profiles.interfaces.acl.ProfilesApi;
 
 import java.util.UUID;
 
@@ -20,13 +21,16 @@ public class OrganizationController {
 
     private final OrganizationCommandService commandService;
     private final OrganizationQueryService queryService;
+    private final ProfilesApi profilesApi;
 
     public OrganizationController(
         OrganizationCommandService commandService,
-        OrganizationQueryService queryService
+        OrganizationQueryService queryService,
+        ProfilesApi profilesApi
     ) {
         this.commandService = commandService;
         this.queryService = queryService;
+        this.profilesApi = profilesApi;
     }
 
     @PostMapping
@@ -34,6 +38,7 @@ public class OrganizationController {
         @RequestBody @Valid CreateOrganizationRequest request,
         @RequestHeader(name = "X-Requester-Id", required = true) UUID requesterId
     ) {
+        this.profilesApi.requireProfileId(requesterId);
         var organizationId = this.commandService.handle(request.toCommand(requesterId));
 
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -52,6 +57,7 @@ public class OrganizationController {
         @RequestBody @Valid UpdateOrganizationRequest request,
         @RequestHeader("X-Requester-Id") UUID requesterId
     ) {
+        this.profilesApi.requireProfileId(requesterId);
         this.commandService.handle(request.toCommand(id, requesterId));
 
         return ResponseEntity.ok(

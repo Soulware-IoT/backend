@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.ColumnTransformer;
 import site.soulware.cocina360.organizations.domain.model.valueobject.InvitationStatus;
 
 import java.time.Instant;
@@ -32,6 +33,7 @@ public class InvitationJpaEntity {
     private Instant respondedAt;
 
     @Column(nullable = false)
+    @ColumnTransformer(write = "?::invitation_status")
     private InvitationStatus status;
 
     protected InvitationJpaEntity() {}

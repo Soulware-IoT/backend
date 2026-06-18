@@ -6,12 +6,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import site.soulware.cocina360.organizations.application.InvitationCommandService;
 import site.soulware.cocina360.organizations.application.InvitationQueryService;
+import site.soulware.cocina360.organizations.application.OrganizationQueryService;
 import site.soulware.cocina360.organizations.domain.model.command.AcceptInvitationCommand;
 import site.soulware.cocina360.organizations.domain.model.command.DeclineInvitationCommand;
 import site.soulware.cocina360.organizations.domain.model.query.GetInvitationQuery;
+import site.soulware.cocina360.organizations.domain.model.query.GetOrganizationQuery;
 import site.soulware.cocina360.organizations.domain.model.query.ListOrganizationInvitationsQuery;
 import site.soulware.cocina360.organizations.interfaces.rest.request.InviteRequest;
 import site.soulware.cocina360.organizations.interfaces.rest.response.InvitationResponse;
+import site.soulware.cocina360.profiles.interfaces.acl.ProfilesApi;
 
 import java.util.List;
 import java.util.UUID;
@@ -21,13 +24,19 @@ public class InvitationController {
 
     private final InvitationCommandService commandService;
     private final InvitationQueryService queryService;
+    private final OrganizationQueryService organizationQueryService;
+    private final ProfilesApi profilesApi;
 
     public InvitationController(
         InvitationCommandService commandService,
-        InvitationQueryService queryService
+        InvitationQueryService queryService,
+        OrganizationQueryService organizationQueryService,
+        ProfilesApi profilesApi
     ) {
         this.commandService = commandService;
         this.queryService = queryService;
+        this.organizationQueryService = organizationQueryService;
+        this.profilesApi = profilesApi;
     }
 
     @PostMapping("/organizations/{organizationId}/invitations")
@@ -37,12 +46,15 @@ public class InvitationController {
         @RequestHeader("X-Requester-Id") UUID requesterId
     ) {
 
+        this.requireOrganization(organizationId);
+        this.profilesApi.requireProfileId(requesterId);
         this.commandService.handle(request.toCommand(organizationId, requesterId));
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @GetMapping("/organizations/{organizationId}/invitations")
     public ResponseEntity<List<InvitationResponse>> listByOrganization(@PathVariable UUID organizationId) {
+        this.requireOrganization(organizationId);
         return ResponseEntity.ok(
                 this.queryService.handle(new ListOrganizationInvitationsQuery(organizationId))
                         .stream().map(InvitationResponse::from).toList());
@@ -60,6 +72,7 @@ public class InvitationController {
         @RequestHeader("X-Requester-Id") UUID requesterId
     ) {
 
+        this.profilesApi.requireProfileId(requesterId);
         this.commandService.handle(new AcceptInvitationCommand(id, requesterId));
 
         return ResponseEntity.ok(
@@ -72,5 +85,9 @@ public class InvitationController {
 
         return ResponseEntity.ok(
                 InvitationResponse.from(this.queryService.handle(new GetInvitationQuery(id))));
+    }
+
+    private void requireOrganization(UUID organizationId) {
+        this.organizationQueryService.handle(new GetOrganizationQuery(organizationId));
     }
 }

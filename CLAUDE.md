@@ -106,6 +106,52 @@ When an aggregate in context A holds a reference to an aggregate that belongs to
 
 IDs that are only used as a type's own identity (never held as a foreign key by another context) stay inside their own module's `domain.model.valueobject`.
 
+### Cross-Context Existence Checks (Facade Pattern)
+
+Some operations depend on aggregates that live in **another** bounded context. For example, creating an invitation (in `organizations`) requires that a `Profile` with the given email exists (in `profiles`) and that the organization exists. Listing members requires the organization to exist.
+
+To verify those dependencies **without breaking module boundaries**, the owning context exposes a **facade** — an anti-corruption-layer port living in an `interfaces/acl` sub-package, published to Spring Modulith as a **named interface** and implemented by delegating to its own query/command services. Consuming contexts depend only on that port, never on the other module's `application`, `domain`, or `infrastructure` packages.
+
+Rules:
+- The facade lives in the owning module's **`interfaces/acl`** package (e.g. `profiles.interfaces.acl.ProfilesApi`). That package's `package-info.java` carries `@org.springframework.modulith.NamedInterface("acl")`, which exposes it as consumable API (sub-packages are otherwise module-internal; only the root package is exposed by default). Both the port and its `@Service` adapter (e.g. `ProfilesApiImpl`) live in this package — the adapter depends on the module's `application` query service (the normal `interfaces → application` direction).
+- The facade method signatures use **only shared types** (`shared.domain.model.valueobject.*`) or primitives — never the other module's internal aggregates, `Result` records, or query/command records. A method returns, e.g., a `ProfileId`, not a `Profile` or `ProfileResult`.
+- **Existence is enforced by reusing the existing domain exception.** The adapter delegates to the query service, which already throws the canonical `*NotFoundException` (e.g. `ProfileNotFoundException.byEmail(...)`). That exception propagates unchanged up to `GlobalExceptionHandler`, so consumers never reimplement "not found" logic or invent new message keys.
+- The consumer calls the facade as a guard, then proceeds. Example: the invitation flow calls `profilesApi.requireProfileId(requesterId)` (throws `ProfileNotFoundException` if absent) and an `organizations`-internal `OrganizationQueryService` lookup for the organization, before creating the invitation.
+
+```java
+// profiles/interfaces/acl/package-info.java
+@org.springframework.modulith.NamedInterface("acl")
+package site.soulware.cocina360.profiles.interfaces.acl;
+
+// profiles/interfaces/acl/ProfilesApi.java — published ACL port
+public interface ProfilesApi {
+    ProfileId requireProfileId(UUID profileId);        // throws ProfileNotFoundException if absent
+    ProfileId requireProfileIdByEmail(String email);  // throws ProfileNotFoundException if absent
+}
+
+// profiles/interfaces/acl/ProfilesApiImpl.java — adapter, delegates + reuses domain exception
+@Service
+class ProfilesApiImpl implements ProfilesApi {
+    private final ProfileQueryService queryService;
+    // ...
+    public ProfileId requireProfileId(UUID profileId) {
+        return ProfileId.of(this.queryService.handle(new GetProfileQuery(profileId)).profileId());
+    }
+}
+```
+
+Prefer this synchronous facade for **read/verification** dependencies that must resolve before a command completes. Continue to use **domain events** (`@ApplicationModuleListener`) for fire-and-forget reactions after a fact has occurred — facades are not a replacement for the event-driven flow.
+
+### Same-Context Existence Checks
+
+The same robustness rule applies to references **within** a single bounded context. Before a controller dispatches a command that targets or references an existing aggregate/entity of its own context, it **verifies existence through the context's own query service** — the query service already throws the canonical `*NotFoundException` when the resource is absent.
+
+- The check is a `queryService.handle(GetXQuery)` call; its `*NotFoundException` propagates to `GlobalExceptionHandler`, so the endpoint returns a correct 404 without the controller writing any conditional/exception logic.
+- This fits the established CQRS flow (controller → command service → query service): the verifying query and the post-command read use the **same** query service, reusing the same exceptions and message keys.
+- The result: every endpoint that names a referenced resource is robust by construction — a missing aggregate/entity surfaces as the existing domain exception rather than a downstream constraint error or a `NullPointerException`.
+
+In short: **cross-context references are guarded via the owning module's facade; same-context references are guarded via the context's own query service.** Both reuse existing domain exceptions instead of reimplementing not-found handling.
+
 ### Exception Conventions
 
 - All domain exceptions extend `DomainException` and pass a **message key** (not a hardcoded string) to the super constructor, e.g. `super("error.profile.not_found_by_id", id)`.
@@ -136,6 +182,24 @@ Authentication and authorization are **out of scope** for this service. An API g
 - Connect via the **Supabase connection pooler** (PgBouncer), not the direct connection, to avoid IPv6 routing issues. Use `?sslmode=require&prepareThreshold=0` in the JDBC URL (`prepareThreshold=0` disables prepared statements, required for PgBouncer in transaction mode).
 - `ddl-auto=none`: schema is managed externally (migrations via Flyway or Supabase dashboard SQL editor).
 - JPA/Hibernate is confined to the `infrastructure` layer of each module. Domain objects are mapped via `@MappedSuperclass` from the shared base classes.
+
+#### PostgreSQL enum columns
+
+The database defines several native `enum` types (e.g. `permission_level`, `invitation_status`). The PostgreSQL JDBC driver always sends `String`-converted values as `varchar`, and PostgreSQL **never** implicitly casts `varchar → <named enum>`, so a bare insert fails with `column "x" is of type <enum> but expression is of type character varying`.
+
+**Convention:** map the field to a Java enum with an `AttributeConverter` (producing the lowercase label) **and** add an explicit write-cast so Hibernate emits the cast in the generated SQL:
+
+```java
+@Column(name = "status", nullable = false)
+@ColumnTransformer(write = "?::invitation_status")   // cast varchar bind → native enum
+private InvitationStatus status;
+```
+
+Apply `@ColumnTransformer(write = "?::<pg_enum_type>")` to **every** column backed by a PostgreSQL native enum. This keeps the fix scoped per-column (preferred over the global `stringtype=unspecified` JDBC flag).
+
+#### Database triggers / RLS are out of scope
+
+The DB is treated purely as persistence. Supabase-Auth-oriented artifacts — `BEFORE INSERT` triggers that set audit columns from `auth.uid()`, auto-membership triggers, and Row-Level Security — are **incompatible** with this backend: it connects as the pooler role with no Supabase auth session, so `auth.uid()` is `NULL` and silently nulls audit columns (`created_by`, `owned_by`, …), causing `NOT NULL` violations even when the app sends valid values. The **application is the source of truth** for audit fields and derived rows; such triggers/RLS must be dropped on tables this service writes to.
 
 ## Coding Style
 
