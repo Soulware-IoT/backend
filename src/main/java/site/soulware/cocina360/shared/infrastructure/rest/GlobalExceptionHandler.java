@@ -11,6 +11,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import site.soulware.cocina360.shared.domain.model.exception.BusinessRuleViolationException;
 import site.soulware.cocina360.shared.domain.model.exception.DomainException;
 import site.soulware.cocina360.shared.domain.model.exception.EntityNotFoundException;
+import site.soulware.cocina360.shared.domain.model.exception.UnauthorizedException;
 
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -40,6 +41,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.UNPROCESSABLE_CONTENT)
                 .body(ErrorResponse.of(422, "Unprocessable Entity", message));
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ErrorResponse> handle(UnauthorizedException ex) {
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(ErrorResponse.of(401, "Unauthorized", this.resolve(ex)));
     }
 
     @ExceptionHandler(DomainException.class)

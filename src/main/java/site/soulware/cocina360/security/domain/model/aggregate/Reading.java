@@ -1,7 +1,7 @@
 package site.soulware.cocina360.security.domain.model.aggregate;
 
 import site.soulware.cocina360.security.domain.model.event.CriticalReadingDetected;
-import site.soulware.cocina360.security.domain.model.valueobject.DeviceId;
+import site.soulware.cocina360.security.domain.model.valueobject.IoTDeviceId;
 import site.soulware.cocina360.security.domain.model.valueobject.ReadingId;
 import site.soulware.cocina360.security.domain.model.valueobject.SafetySeverity;
 import site.soulware.cocina360.shared.domain.model.aggregate.AggregateRoot;
@@ -20,7 +20,7 @@ import java.time.Instant;
 public class Reading extends AggregateRoot<ReadingId> {
 
     private final ReadingId id;
-    private final DeviceId deviceId;
+    private final IoTDeviceId deviceId;
     private final int temperatureC;
     private final double gasPpm;
     private final SafetySeverity severity;
@@ -29,7 +29,7 @@ public class Reading extends AggregateRoot<ReadingId> {
 
     private Reading(
         ReadingId id,
-        DeviceId deviceId,
+        IoTDeviceId deviceId,
         int temperatureC,
         double gasPpm,
         SafetySeverity severity,
@@ -47,7 +47,7 @@ public class Reading extends AggregateRoot<ReadingId> {
 
     public static Reading record(
         ReadingId id,
-        DeviceId deviceId,
+        IoTDeviceId deviceId,
         int temperatureC,
         double gasPpm,
         SafetySeverity severity,
@@ -64,7 +64,7 @@ public class Reading extends AggregateRoot<ReadingId> {
 
     public static Reading rehydrate(
         ReadingId id,
-        DeviceId deviceId,
+        IoTDeviceId deviceId,
         int temperatureC,
         double gasPpm,
         SafetySeverity severity,
@@ -76,7 +76,7 @@ public class Reading extends AggregateRoot<ReadingId> {
 
     @Override
     public ReadingId getId() { return this.id; }
-    public DeviceId getDeviceId() { return this.deviceId; }
+    public IoTDeviceId getDeviceId() { return this.deviceId; }
     public int getTemperatureC() { return this.temperatureC; }
     public double getGasPpm() { return this.gasPpm; }
     public SafetySeverity getSeverity() { return this.severity; }

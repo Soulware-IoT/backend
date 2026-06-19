@@ -6,7 +6,7 @@ import java.security.SecureRandom;
 import java.util.HexFormat;
 
 /**
- * A provisioned secret credential. Both the edge gateway (to authenticate to
+ * A provisioned secret credential. Both the edge device (to authenticate to
  * this backend) and a device (to authenticate to its edge) carry one. The
  * backend is the source of truth: it {@link #generate() generates} the key on
  * registration and {@link #generate() rotates} it on demand; downstream the
