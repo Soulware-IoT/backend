@@ -124,7 +124,13 @@ public class IoTDevice extends AggregateRoot<IoTDeviceId> {
                 createdAt, createdBy, updatedAt, updatedBy);
     }
 
+    /**
+     * Rename a claimed device.
+     *
+     * @throws IoTDeviceNotClaimedException if the device is still {@code PROVISIONED}.
+     */
     public void rename(String name, ProfileId updatedBy) {
+        this.requireClaimed();
         this.name = name;
         this.touch(updatedBy);
     }
@@ -136,23 +142,40 @@ public class IoTDevice extends AggregateRoot<IoTDeviceId> {
      *         factory configuration cannot be changed before it is claimed by an org.
      */
     public void updateThresholds(SafetyThresholds thresholds, ProfileId updatedBy) {
-        if (this.status == IoTDeviceStatus.PROVISIONED) {
-            throw new IoTDeviceNotClaimedException(this.code.value());
-        }
+        this.requireClaimed();
         this.thresholds = thresholds;
         this.touch(updatedBy);
         this.registerEvent(new IoTDeviceThresholdsUpdated(this.id.value(), this.updatedAt));
     }
 
+    /**
+     * Put a claimed device back in service.
+     *
+     * @throws IoTDeviceNotClaimedException if the device is still {@code PROVISIONED}.
+     */
     public void activate(ProfileId updatedBy) {
+        this.requireClaimed();
         this.status = IoTDeviceStatus.ACTIVE;
         this.touch(updatedBy);
     }
 
+    /**
+     * Take a claimed device out of service; the edge stops trusting it.
+     *
+     * @throws IoTDeviceNotClaimedException if the device is still {@code PROVISIONED}.
+     */
     public void deactivate(ProfileId updatedBy) {
+        this.requireClaimed();
         this.status = IoTDeviceStatus.INACTIVE;
         this.touch(updatedBy);
         this.registerEvent(new IoTDeviceDeactivated(this.id.value(), this.updatedAt));
+    }
+
+    /** Management operations are only valid once a device has been claimed by an org. */
+    private void requireClaimed() {
+        if (this.status == IoTDeviceStatus.PROVISIONED) {
+            throw new IoTDeviceNotClaimedException(this.code.value());
+        }
     }
 
     private void touch(ProfileId updatedBy) {

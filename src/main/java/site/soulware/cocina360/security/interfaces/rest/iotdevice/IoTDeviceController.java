@@ -15,7 +15,10 @@ import site.soulware.cocina360.security.domain.model.query.GetIoTDeviceQuery;
 import site.soulware.cocina360.security.domain.model.query.GetEdgeDeviceByOrganizationQuery;
 import site.soulware.cocina360.security.domain.model.query.ListDevicesByOrganizationQuery;
 import site.soulware.cocina360.security.domain.model.valueobject.IoTDeviceId;
+import site.soulware.cocina360.security.domain.model.command.ActivateIoTDeviceCommand;
+import site.soulware.cocina360.security.domain.model.command.DeactivateIoTDeviceCommand;
 import site.soulware.cocina360.security.interfaces.rest.iotdevice.request.ClaimDeviceRequest;
+import site.soulware.cocina360.security.interfaces.rest.iotdevice.request.RenameDeviceRequest;
 import site.soulware.cocina360.security.interfaces.rest.iotdevice.request.UpdateThresholdsRequest;
 import site.soulware.cocina360.security.interfaces.rest.iotdevice.response.IoTDeviceResponse;
 
@@ -97,6 +100,49 @@ public class IoTDeviceController {
         this.queryService.handle(new GetIoTDeviceQuery(id));
 
         this.commandService.handle(request.toCommand(id, requesterId));
+
+        return ResponseEntity.ok(
+                IoTDeviceResponse.from(this.queryService.handle(new GetIoTDeviceQuery(id))));
+    }
+
+    @PatchMapping("/devices/{id}/name")
+    public ResponseEntity<IoTDeviceResponse> rename(
+        @PathVariable UUID id,
+        @RequestBody @Valid RenameDeviceRequest request,
+        @RequestHeader("X-Requester-Id") UUID requesterId
+    ) {
+        this.profilesApi.requireProfileId(requesterId);
+        this.queryService.handle(new GetIoTDeviceQuery(id));
+
+        this.commandService.handle(request.toCommand(id, requesterId));
+
+        return ResponseEntity.ok(
+                IoTDeviceResponse.from(this.queryService.handle(new GetIoTDeviceQuery(id))));
+    }
+
+    @PostMapping("/devices/{id}/activate")
+    public ResponseEntity<IoTDeviceResponse> activate(
+        @PathVariable UUID id,
+        @RequestHeader("X-Requester-Id") UUID requesterId
+    ) {
+        this.profilesApi.requireProfileId(requesterId);
+        this.queryService.handle(new GetIoTDeviceQuery(id));
+
+        this.commandService.handle(new ActivateIoTDeviceCommand(id, requesterId));
+
+        return ResponseEntity.ok(
+                IoTDeviceResponse.from(this.queryService.handle(new GetIoTDeviceQuery(id))));
+    }
+
+    @PostMapping("/devices/{id}/deactivate")
+    public ResponseEntity<IoTDeviceResponse> deactivate(
+        @PathVariable UUID id,
+        @RequestHeader("X-Requester-Id") UUID requesterId
+    ) {
+        this.profilesApi.requireProfileId(requesterId);
+        this.queryService.handle(new GetIoTDeviceQuery(id));
+
+        this.commandService.handle(new DeactivateIoTDeviceCommand(id, requesterId));
 
         return ResponseEntity.ok(
                 IoTDeviceResponse.from(this.queryService.handle(new GetIoTDeviceQuery(id))));
