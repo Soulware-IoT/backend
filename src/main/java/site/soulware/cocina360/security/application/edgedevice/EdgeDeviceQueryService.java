@@ -7,8 +7,10 @@ import site.soulware.cocina360.security.domain.model.exception.InvalidEdgeApiKey
 import site.soulware.cocina360.security.domain.model.query.AuthenticateEdgeQuery;
 import site.soulware.cocina360.security.domain.model.query.GetEdgeDeviceByOrganizationQuery;
 import site.soulware.cocina360.security.domain.model.query.GetEdgeDeviceQuery;
+import site.soulware.cocina360.security.domain.model.aggregate.EdgeDevice;
 import site.soulware.cocina360.security.domain.model.valueobject.ApiKey;
 import site.soulware.cocina360.security.domain.model.valueobject.EdgeDeviceId;
+import site.soulware.cocina360.security.domain.model.valueobject.EdgeDeviceStatus;
 import site.soulware.cocina360.security.domain.repository.EdgeDeviceRepository;
 import site.soulware.cocina360.shared.domain.model.valueobject.OrganizationId;
 
@@ -39,14 +41,21 @@ public class EdgeDeviceQueryService {
      * (and thus its organization). The single point edge-facing endpoints use to link a
      * caller to its org.
      *
-     * @throws InvalidEdgeApiKeyException if the key is missing/blank or unrecognised (401).
+     * Only {@code ACTIVE} edges authenticate: a provisioned-but-unclaimed or deactivated
+     * edge holds a valid key but has no organization to act for, so it is rejected here.
+     *
+     * @throws InvalidEdgeApiKeyException if the key is missing/blank, unrecognised, or the
+     *         resolved edge is not {@code ACTIVE} (401).
      */
     public EdgeDeviceResult handle(AuthenticateEdgeQuery query) {
         if (query.apiKey() == null || query.apiKey().isBlank()) {
             throw new InvalidEdgeApiKeyException();
         }
-        return this.edgeDeviceRepository.findByApiKey(ApiKey.of(query.apiKey()))
-                .map(EdgeDeviceResult::from)
+        EdgeDevice edge = this.edgeDeviceRepository.findByApiKey(ApiKey.of(query.apiKey()))
                 .orElseThrow(InvalidEdgeApiKeyException::new);
+        if (edge.getStatus() != EdgeDeviceStatus.ACTIVE) {
+            throw new InvalidEdgeApiKeyException();
+        }
+        return EdgeDeviceResult.from(edge);
     }
 }
