@@ -2,8 +2,8 @@ package site.soulware.cocina360.profiles.domain.model.aggregate;
 
 import site.soulware.cocina360.profiles.domain.model.event.ProfileDetailsUpdated;
 import site.soulware.cocina360.profiles.domain.model.valueobject.Email;
-import site.soulware.cocina360.profiles.domain.model.valueobject.ProfileId;
 import site.soulware.cocina360.shared.domain.model.aggregate.AggregateRoot;
+import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
 
 import java.time.Instant;
 import java.util.Objects;

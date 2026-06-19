@@ -1,0 +1,16 @@
+package site.soulware.cocina360.profiles.interfaces.rest.profile.request;
+
+import site.soulware.cocina360.profiles.domain.model.command.UpdateProfileDetailsCommand;
+
+import java.util.UUID;
+
+public record UpdateProfileDetailsRequest(
+        String fullName,
+        String preferredName,
+        String avatarUrl
+) {
+
+    public UpdateProfileDetailsCommand toCommand(UUID profileId) {
+        return new UpdateProfileDetailsCommand(profileId, this.fullName, this.preferredName, this.avatarUrl);
+    }
+}
