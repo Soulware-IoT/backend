@@ -89,8 +89,12 @@ public class InvitationController {
     }
 
     @PostMapping("/invitations/{id}/decline")
-    public ResponseEntity<InvitationResponse> decline(@PathVariable UUID id) {
-        this.commandService.handle(new DeclineInvitationCommand(id));
+    public ResponseEntity<InvitationResponse> decline(
+        @PathVariable UUID id,
+        @RequestHeader("X-Requester-Id") UUID requesterId
+    ) {
+        this.profilesApi.requireProfileId(requesterId);
+        this.commandService.handle(new DeclineInvitationCommand(id, requesterId));
 
         return ResponseEntity.ok(
                 InvitationResponse.from(this.queryService.handle(new GetInvitationQuery(id))));

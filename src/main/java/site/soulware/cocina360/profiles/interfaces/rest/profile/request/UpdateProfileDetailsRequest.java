@@ -11,7 +11,7 @@ public record UpdateProfileDetailsRequest(
         @Schema(description = "Optional. Provide to update; omit to leave unchanged.") String avatarUrl
 ) {
 
-    public UpdateProfileDetailsCommand toCommand(UUID profileId) {
-        return new UpdateProfileDetailsCommand(profileId, this.fullName, this.preferredName, this.avatarUrl);
+    public UpdateProfileDetailsCommand toCommand(UUID profileId, UUID requesterId) {
+        return new UpdateProfileDetailsCommand(profileId, requesterId, this.fullName, this.preferredName, this.avatarUrl);
     }
 }

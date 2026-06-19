@@ -64,6 +64,7 @@ public class OrganizationCommandService {
 
     public void handle(DeleteOrganizationCommand command) {
         Organization org = this.findOrThrow(OrganizationId.of(command.organizationId()));
+        org.requireOwner(ProfileId.of(command.requesterId()));
         this.organizationRepository.delete(org);
     }
 

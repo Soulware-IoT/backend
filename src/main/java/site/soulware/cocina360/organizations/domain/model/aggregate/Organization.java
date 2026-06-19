@@ -2,6 +2,7 @@ package site.soulware.cocina360.organizations.domain.model.aggregate;
 
 import site.soulware.cocina360.organizations.domain.model.event.OrganizationCreated;
 import site.soulware.cocina360.organizations.domain.model.event.OrganizationUpdated;
+import site.soulware.cocina360.organizations.domain.model.exception.NotOrganizationOwnerException;
 import site.soulware.cocina360.shared.domain.model.aggregate.AggregateRoot;
 import site.soulware.cocina360.shared.domain.model.valueobject.OrganizationId;
 import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
@@ -98,6 +99,12 @@ public class Organization extends AggregateRoot<OrganizationId> {
         this.updatedBy = updatedBy;
         this.updatedAt = Instant.now();
         this.registerEvent(new OrganizationUpdated(this.id.value(), this.updatedAt));
+    }
+
+    public void requireOwner(ProfileId requesterId) {
+        if (!this.ownedBy.equals(requesterId)) {
+            throw new NotOrganizationOwnerException();
+        }
     }
 
     @Override

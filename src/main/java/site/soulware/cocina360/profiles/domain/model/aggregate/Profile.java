@@ -1,6 +1,7 @@
 package site.soulware.cocina360.profiles.domain.model.aggregate;
 
 import site.soulware.cocina360.profiles.domain.model.event.ProfileDetailsUpdated;
+import site.soulware.cocina360.profiles.domain.model.exception.NotProfileOwnerException;
 import site.soulware.cocina360.profiles.domain.model.valueobject.Email;
 import site.soulware.cocina360.shared.domain.model.aggregate.AggregateRoot;
 import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
@@ -32,6 +33,12 @@ public class Profile extends AggregateRoot<ProfileId> {
     public static Profile rehydrate(ProfileId id, String fullName, String preferredName,
                                     Email email, String avatarUrl, Instant createdAt, Instant updatedAt) {
         return new Profile(id, fullName, preferredName, email, avatarUrl, createdAt, updatedAt);
+    }
+
+    public void requireSelf(ProfileId requesterId) {
+        if (!this.id.equals(requesterId)) {
+            throw new NotProfileOwnerException();
+        }
     }
 
     public void updateDetails(String fullName, String preferredName, String avatarUrl) {

@@ -65,8 +65,12 @@ public class OrganizationController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        this.commandService.handle(new DeleteOrganizationCommand(id));
+    public ResponseEntity<Void> delete(
+        @PathVariable UUID id,
+        @RequestHeader("X-Requester-Id") UUID requesterId
+    ) {
+        this.profilesApi.requireProfileId(requesterId);
+        this.commandService.handle(new DeleteOrganizationCommand(id, requesterId));
         return ResponseEntity.noContent().build();
     }
 }
