@@ -5,6 +5,8 @@ import site.soulware.cocina360.profiles.domain.model.valueobject.Email;
 import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
 import site.soulware.cocina360.shared.domain.repository.DomainRepository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public interface ProfileRepository extends DomainRepository<Profile, ProfileId> {
@@ -14,4 +16,6 @@ public interface ProfileRepository extends DomainRepository<Profile, ProfileId> 
     Optional<Profile> findByEmail(Email email);
 
     boolean existsById(ProfileId id);
+
+    List<Profile> findAllById(Collection<ProfileId> ids);
 }

@@ -6,7 +6,10 @@ import site.soulware.cocina360.profiles.domain.model.valueobject.Email;
 import site.soulware.cocina360.profiles.domain.repository.ProfileRepository;
 import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public class ProfileRepositoryAdapter implements ProfileRepository {
@@ -36,6 +39,12 @@ public class ProfileRepositoryAdapter implements ProfileRepository {
     @Override
     public boolean existsById(ProfileId id) {
         return this.jpaRepository.existsById(id.value());
+    }
+
+    @Override
+    public List<Profile> findAllById(Collection<ProfileId> ids) {
+        List<UUID> rawIds = ids.stream().map(ProfileId::value).toList();
+        return this.jpaRepository.findAllById(rawIds).stream().map(this::toDomain).toList();
     }
 
     @Override

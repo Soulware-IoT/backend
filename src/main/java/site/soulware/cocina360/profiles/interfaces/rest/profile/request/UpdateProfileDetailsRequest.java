@@ -1,12 +1,11 @@
 package site.soulware.cocina360.profiles.interfaces.rest.profile.request;
 
-import jakarta.validation.constraints.NotBlank;
 import site.soulware.cocina360.profiles.domain.model.command.UpdateProfileDetailsCommand;
 
 import java.util.UUID;
 
 public record UpdateProfileDetailsRequest(
-        @NotBlank String fullName,
+        String fullName,
         String preferredName,
         String avatarUrl
 ) {

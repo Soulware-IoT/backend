@@ -146,6 +146,17 @@ class ProfilesApiImpl implements ProfilesApi {
 
 Prefer this synchronous facade for **read/verification** dependencies that must resolve before a command completes. Continue to use **domain events** (`@ApplicationModuleListener`) for fire-and-forget reactions after a fact has occurred — facades are not a replacement for the event-driven flow.
 
+#### Published Language: embedding another context's data in read models
+
+When a query result needs to **embed** data owned by another context (e.g. a member listing showing each member's name/email/avatar) — rather than just verify existence — the ACL graduates into a **Published Language**: it additionally exposes a small read-model record and a **batch** lookup, and the consuming **query service** enriches its results.
+
+- The published view (e.g. `ProfileSummary`) is a `record` living in the owning module's `interfaces/acl` package — it is part of the named interface, so consumers may reference it directly. It is **not** placed in `shared` (that is for cross-cutting value objects, not another context's data shape).
+- The lookup is **batch** (`Map<UUID, ProfileSummary> findProfiles(Collection<UUID> ids)`) to avoid N+1 — the consuming query service collects all foreign ids, makes **one** call, then maps each row.
+- It is a **projection, not a guard**: missing ids are simply absent from the returned map (no exception), unlike the `require*` methods. Verifying existence and projecting data are different intents, so they are different methods.
+- Enrichment happens in the **query service** (read side) and the embedded record is carried through the `Result` into the `response`. The consuming `Result`/`response` records reference the published view type directly.
+
+This keeps the embed in-process (one call, same DB) — eliminating a client round-trip — without `organizations` importing any `profiles` internals or doing a cross-context SQL join. For a future split into separate services, the alternative is **event-driven replication** of a local read model (`@ApplicationModuleListener` on the owner's events); that is over-engineering while this remains a single process.
+
 ### Same-Context Existence Checks
 
 The same robustness rule applies to references **within** a single bounded context. Before a controller dispatches a command that targets or references an existing aggregate/entity of its own context, it **verifies existence through the context's own query service** — the query service already throws the canonical `*NotFoundException` when the resource is absent.
