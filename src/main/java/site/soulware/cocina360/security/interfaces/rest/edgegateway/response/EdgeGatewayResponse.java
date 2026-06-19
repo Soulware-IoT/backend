@@ -18,7 +18,9 @@ public record EdgeGatewayResponse(
     ActivationStatus status,
     String apiKey,
     Instant createdAt,
-    Instant updatedAt
+    UUID createdBy,
+    Instant updatedAt,
+    UUID updatedBy
 ) {
 
     public static EdgeGatewayResponse from(EdgeGatewayResult result) {
@@ -29,7 +31,9 @@ public record EdgeGatewayResponse(
                 result.status(),
                 result.apiKey(),
                 result.createdAt(),
-                result.updatedAt()
+                result.createdBy(),
+                result.updatedAt(),
+                result.updatedBy()
         );
     }
 }

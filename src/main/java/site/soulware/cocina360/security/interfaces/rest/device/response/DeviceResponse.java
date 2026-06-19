@@ -19,7 +19,9 @@ public record DeviceResponse(
     String apiKey,
     Thresholds thresholds,
     Instant createdAt,
-    Instant updatedAt
+    UUID createdBy,
+    Instant updatedAt,
+    UUID updatedBy
 ) {
 
     public record Thresholds(
@@ -43,7 +45,9 @@ public record DeviceResponse(
                         result.warnGasPpm(),
                         result.critGasPpm()),
                 result.createdAt(),
-                result.updatedAt()
+                result.createdBy(),
+                result.updatedAt(),
+                result.updatedBy()
         );
     }
 }

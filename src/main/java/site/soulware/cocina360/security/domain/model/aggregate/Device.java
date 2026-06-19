@@ -11,6 +11,7 @@ import site.soulware.cocina360.security.domain.model.valueobject.DeviceId;
 import site.soulware.cocina360.security.domain.model.valueobject.SafetyThresholds;
 import site.soulware.cocina360.shared.domain.model.aggregate.AggregateRoot;
 import site.soulware.cocina360.shared.domain.model.valueobject.OrganizationId;
+import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
 
 import java.time.Instant;
 
@@ -30,7 +31,9 @@ public class Device extends AggregateRoot<DeviceId> {
     private ApiKey apiKey;
     private SafetyThresholds thresholds;
     private final Instant createdAt;
+    private final ProfileId createdBy;
     private Instant updatedAt;
+    private ProfileId updatedBy;
 
     private Device(
         DeviceId id,
@@ -41,7 +44,9 @@ public class Device extends AggregateRoot<DeviceId> {
         ApiKey apiKey,
         SafetyThresholds thresholds,
         Instant createdAt,
-        Instant updatedAt
+        ProfileId createdBy,
+        Instant updatedAt,
+        ProfileId updatedBy
     ) {
         this.id = id;
         this.organizationId = organizationId;
@@ -51,7 +56,9 @@ public class Device extends AggregateRoot<DeviceId> {
         this.apiKey = apiKey;
         this.thresholds = thresholds;
         this.createdAt = createdAt;
+        this.createdBy = createdBy;
         this.updatedAt = updatedAt;
+        this.updatedBy = updatedBy;
     }
 
     public static Device register(
@@ -59,11 +66,12 @@ public class Device extends AggregateRoot<DeviceId> {
         OrganizationId organizationId,
         DeviceCode code,
         String name,
-        SafetyThresholds thresholds
+        SafetyThresholds thresholds,
+        ProfileId requesterId
     ) {
         Instant now = Instant.now();
         Device device = new Device(id, organizationId, code, name, ActivationStatus.ACTIVE,
-                ApiKey.generate(), thresholds, now, now);
+                ApiKey.generate(), thresholds, now, requesterId, now, requesterId);
         device.registerEvent(new DeviceRegistered(id.value(), organizationId.value(), code.value(), now));
         return device;
     }
@@ -77,37 +85,45 @@ public class Device extends AggregateRoot<DeviceId> {
         ApiKey apiKey,
         SafetyThresholds thresholds,
         Instant createdAt,
-        Instant updatedAt
+        ProfileId createdBy,
+        Instant updatedAt,
+        ProfileId updatedBy
     ) {
-        return new Device(id, organizationId, code, name, status, apiKey, thresholds, createdAt, updatedAt);
+        return new Device(id, organizationId, code, name, status, apiKey, thresholds,
+                createdAt, createdBy, updatedAt, updatedBy);
     }
 
-    public void rename(String name) {
+    public void rename(String name, ProfileId updatedBy) {
         this.name = name;
-        this.updatedAt = Instant.now();
+        this.touch(updatedBy);
     }
 
-    public void updateThresholds(SafetyThresholds thresholds) {
+    public void updateThresholds(SafetyThresholds thresholds, ProfileId updatedBy) {
         this.thresholds = thresholds;
-        this.updatedAt = Instant.now();
+        this.touch(updatedBy);
         this.registerEvent(new DeviceThresholdsUpdated(this.id.value(), this.updatedAt));
     }
 
-    public void activate() {
+    public void activate(ProfileId updatedBy) {
         this.status = ActivationStatus.ACTIVE;
-        this.updatedAt = Instant.now();
+        this.touch(updatedBy);
     }
 
-    public void deactivate() {
+    public void deactivate(ProfileId updatedBy) {
         this.status = ActivationStatus.INACTIVE;
-        this.updatedAt = Instant.now();
+        this.touch(updatedBy);
         this.registerEvent(new DeviceDeactivated(this.id.value(), this.updatedAt));
     }
 
-    public void rotateApiKey() {
+    public void rotateApiKey(ProfileId updatedBy) {
         this.apiKey = ApiKey.generate();
-        this.updatedAt = Instant.now();
+        this.touch(updatedBy);
         this.registerEvent(new DeviceApiKeyRotated(this.id.value(), this.updatedAt));
+    }
+
+    private void touch(ProfileId updatedBy) {
+        this.updatedBy = updatedBy;
+        this.updatedAt = Instant.now();
     }
 
     @Override
@@ -119,5 +135,7 @@ public class Device extends AggregateRoot<DeviceId> {
     public ApiKey getApiKey() { return this.apiKey; }
     public SafetyThresholds getThresholds() { return this.thresholds; }
     public Instant getCreatedAt() { return this.createdAt; }
+    public ProfileId getCreatedBy() { return this.createdBy; }
     public Instant getUpdatedAt() { return this.updatedAt; }
+    public ProfileId getUpdatedBy() { return this.updatedBy; }
 }

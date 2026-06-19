@@ -13,7 +13,9 @@ public record EdgeGatewayResult(
     ActivationStatus status,
     String apiKey,
     Instant createdAt,
-    Instant updatedAt
+    UUID createdBy,
+    Instant updatedAt,
+    UUID updatedBy
 ) {
 
     public static EdgeGatewayResult from(EdgeGateway gateway) {
@@ -24,7 +26,9 @@ public record EdgeGatewayResult(
                 gateway.getStatus(),
                 gateway.getApiKey().value(),
                 gateway.getCreatedAt(),
-                gateway.getUpdatedAt()
+                gateway.getCreatedBy().value(),
+                gateway.getUpdatedAt(),
+                gateway.getUpdatedBy().value()
         );
     }
 }

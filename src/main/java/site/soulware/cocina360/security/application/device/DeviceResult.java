@@ -18,7 +18,9 @@ public record DeviceResult(
     double warnGasPpm,
     double critGasPpm,
     Instant createdAt,
-    Instant updatedAt
+    UUID createdBy,
+    Instant updatedAt,
+    UUID updatedBy
 ) {
 
     public static DeviceResult from(Device device) {
@@ -34,7 +36,9 @@ public record DeviceResult(
                 device.getThresholds().warnGasPpm(),
                 device.getThresholds().critGasPpm(),
                 device.getCreatedAt(),
-                device.getUpdatedAt()
+                device.getCreatedBy().value(),
+                device.getUpdatedAt(),
+                device.getUpdatedBy().value()
         );
     }
 }

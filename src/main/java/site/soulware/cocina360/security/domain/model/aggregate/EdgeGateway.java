@@ -8,6 +8,7 @@ import site.soulware.cocina360.security.domain.model.valueobject.ApiKey;
 import site.soulware.cocina360.security.domain.model.valueobject.EdgeGatewayId;
 import site.soulware.cocina360.shared.domain.model.aggregate.AggregateRoot;
 import site.soulware.cocina360.shared.domain.model.valueobject.OrganizationId;
+import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
 
 import java.time.Instant;
 
@@ -25,7 +26,9 @@ public class EdgeGateway extends AggregateRoot<EdgeGatewayId> {
     private ActivationStatus status;
     private ApiKey apiKey;
     private final Instant createdAt;
+    private final ProfileId createdBy;
     private Instant updatedAt;
+    private ProfileId updatedBy;
 
     private EdgeGateway(
         EdgeGatewayId id,
@@ -34,7 +37,9 @@ public class EdgeGateway extends AggregateRoot<EdgeGatewayId> {
         ActivationStatus status,
         ApiKey apiKey,
         Instant createdAt,
-        Instant updatedAt
+        ProfileId createdBy,
+        Instant updatedAt,
+        ProfileId updatedBy
     ) {
         this.id = id;
         this.organizationId = organizationId;
@@ -42,17 +47,20 @@ public class EdgeGateway extends AggregateRoot<EdgeGatewayId> {
         this.status = status;
         this.apiKey = apiKey;
         this.createdAt = createdAt;
+        this.createdBy = createdBy;
         this.updatedAt = updatedAt;
+        this.updatedBy = updatedBy;
     }
 
     public static EdgeGateway register(
         EdgeGatewayId id,
         OrganizationId organizationId,
-        String name
+        String name,
+        ProfileId requesterId
     ) {
         Instant now = Instant.now();
-        EdgeGateway gateway = new EdgeGateway(
-                id, organizationId, name, ActivationStatus.ACTIVE, ApiKey.generate(), now, now);
+        EdgeGateway gateway = new EdgeGateway(id, organizationId, name, ActivationStatus.ACTIVE,
+                ApiKey.generate(), now, requesterId, now, requesterId);
         gateway.registerEvent(new EdgeGatewayRegistered(id.value(), organizationId.value(), now));
         return gateway;
     }
@@ -64,31 +72,39 @@ public class EdgeGateway extends AggregateRoot<EdgeGatewayId> {
         ActivationStatus status,
         ApiKey apiKey,
         Instant createdAt,
-        Instant updatedAt
+        ProfileId createdBy,
+        Instant updatedAt,
+        ProfileId updatedBy
     ) {
-        return new EdgeGateway(id, organizationId, name, status, apiKey, createdAt, updatedAt);
+        return new EdgeGateway(id, organizationId, name, status, apiKey,
+                createdAt, createdBy, updatedAt, updatedBy);
     }
 
-    public void rename(String name) {
+    public void rename(String name, ProfileId updatedBy) {
         this.name = name;
-        this.updatedAt = Instant.now();
+        this.touch(updatedBy);
     }
 
-    public void activate() {
+    public void activate(ProfileId updatedBy) {
         this.status = ActivationStatus.ACTIVE;
-        this.updatedAt = Instant.now();
+        this.touch(updatedBy);
     }
 
-    public void deactivate() {
+    public void deactivate(ProfileId updatedBy) {
         this.status = ActivationStatus.INACTIVE;
-        this.updatedAt = Instant.now();
+        this.touch(updatedBy);
         this.registerEvent(new EdgeGatewayDeactivated(this.id.value(), this.updatedAt));
     }
 
-    public void rotateApiKey() {
+    public void rotateApiKey(ProfileId updatedBy) {
         this.apiKey = ApiKey.generate();
-        this.updatedAt = Instant.now();
+        this.touch(updatedBy);
         this.registerEvent(new EdgeGatewayApiKeyRotated(this.id.value(), this.updatedAt));
+    }
+
+    private void touch(ProfileId updatedBy) {
+        this.updatedBy = updatedBy;
+        this.updatedAt = Instant.now();
     }
 
     @Override
@@ -98,5 +114,7 @@ public class EdgeGateway extends AggregateRoot<EdgeGatewayId> {
     public ActivationStatus getStatus() { return this.status; }
     public ApiKey getApiKey() { return this.apiKey; }
     public Instant getCreatedAt() { return this.createdAt; }
+    public ProfileId getCreatedBy() { return this.createdBy; }
     public Instant getUpdatedAt() { return this.updatedAt; }
+    public ProfileId getUpdatedBy() { return this.updatedBy; }
 }

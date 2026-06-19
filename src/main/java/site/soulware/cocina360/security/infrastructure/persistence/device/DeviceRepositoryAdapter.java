@@ -8,6 +8,7 @@ import site.soulware.cocina360.security.domain.model.valueobject.DeviceId;
 import site.soulware.cocina360.security.domain.model.valueobject.SafetyThresholds;
 import site.soulware.cocina360.security.domain.repository.DeviceRepository;
 import site.soulware.cocina360.shared.domain.model.valueobject.OrganizationId;
+import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
 
 import java.util.List;
 import java.util.Optional;
@@ -68,7 +69,9 @@ public class DeviceRepositoryAdapter implements DeviceRepository {
                 thresholds.warnGasPpm(),
                 thresholds.critGasPpm(),
                 device.getCreatedAt(),
-                device.getUpdatedAt()
+                device.getCreatedBy().value(),
+                device.getUpdatedAt(),
+                device.getUpdatedBy().value()
         );
     }
 
@@ -86,7 +89,9 @@ public class DeviceRepositoryAdapter implements DeviceRepository {
                         entity.getWarnGasPpm(),
                         entity.getCritGasPpm()),
                 entity.getCreatedAt(),
-                entity.getUpdatedAt()
+                ProfileId.of(entity.getCreatedBy()),
+                entity.getUpdatedAt(),
+                ProfileId.of(entity.getUpdatedBy())
         );
     }
 }

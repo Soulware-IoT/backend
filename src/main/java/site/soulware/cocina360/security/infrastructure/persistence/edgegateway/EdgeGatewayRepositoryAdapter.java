@@ -6,6 +6,7 @@ import site.soulware.cocina360.security.domain.model.valueobject.ApiKey;
 import site.soulware.cocina360.security.domain.model.valueobject.EdgeGatewayId;
 import site.soulware.cocina360.security.domain.repository.EdgeGatewayRepository;
 import site.soulware.cocina360.shared.domain.model.valueobject.OrganizationId;
+import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
 
 import java.util.Optional;
 
@@ -52,7 +53,9 @@ public class EdgeGatewayRepositoryAdapter implements EdgeGatewayRepository {
                 gateway.getStatus(),
                 gateway.getApiKey().value(),
                 gateway.getCreatedAt(),
-                gateway.getUpdatedAt()
+                gateway.getCreatedBy().value(),
+                gateway.getUpdatedAt(),
+                gateway.getUpdatedBy().value()
         );
     }
 
@@ -64,7 +67,9 @@ public class EdgeGatewayRepositoryAdapter implements EdgeGatewayRepository {
                 entity.getStatus(),
                 ApiKey.of(entity.getApiKey()),
                 entity.getCreatedAt(),
-                entity.getUpdatedAt()
+                ProfileId.of(entity.getCreatedBy()),
+                entity.getUpdatedAt(),
+                ProfileId.of(entity.getUpdatedBy())
         );
     }
 }

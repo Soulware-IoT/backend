@@ -12,5 +12,6 @@ public record RegisterDeviceCommand(
     UUID organizationId,
     String code,
     String name,
-    SafetyThresholds thresholds
+    SafetyThresholds thresholds,
+    UUID requesterId
 ) {}

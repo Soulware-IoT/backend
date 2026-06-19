@@ -9,6 +9,7 @@ import site.soulware.cocina360.security.domain.model.exception.OrganizationAlrea
 import site.soulware.cocina360.security.domain.model.valueobject.EdgeGatewayId;
 import site.soulware.cocina360.security.domain.repository.EdgeGatewayRepository;
 import site.soulware.cocina360.shared.domain.model.valueobject.OrganizationId;
+import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
 
 @Service
 @Transactional
@@ -32,7 +33,8 @@ public class EdgeGatewayCommandService {
         }
 
         EdgeGatewayId id = EdgeGatewayId.generate();
-        EdgeGateway gateway = EdgeGateway.register(id, organizationId, command.name());
+        EdgeGateway gateway = EdgeGateway.register(
+                id, organizationId, command.name(), ProfileId.of(command.requesterId()));
 
         this.edgeGatewayRepository.save(gateway);
         gateway.pullDomainEvents().forEach(this.eventPublisher::publishEvent);

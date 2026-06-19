@@ -33,8 +33,14 @@ public class EdgeGatewayJpaEntity {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    @Column(name = "created_by", nullable = false, updatable = false)
+    private UUID createdBy;
+
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    @Column(name = "updated_by", nullable = false)
+    private UUID updatedBy;
 
     protected EdgeGatewayJpaEntity() {}
 
@@ -45,7 +51,9 @@ public class EdgeGatewayJpaEntity {
         ActivationStatus status,
         String apiKey,
         Instant createdAt,
-        Instant updatedAt
+        UUID createdBy,
+        Instant updatedAt,
+        UUID updatedBy
     ) {
         this.id = id;
         this.organizationId = organizationId;
@@ -53,7 +61,9 @@ public class EdgeGatewayJpaEntity {
         this.status = status;
         this.apiKey = apiKey;
         this.createdAt = createdAt;
+        this.createdBy = createdBy;
         this.updatedAt = updatedAt;
+        this.updatedBy = updatedBy;
     }
 
     public UUID getId() { return this.id; }
@@ -62,5 +72,7 @@ public class EdgeGatewayJpaEntity {
     public ActivationStatus getStatus() { return this.status; }
     public String getApiKey() { return this.apiKey; }
     public Instant getCreatedAt() { return this.createdAt; }
+    public UUID getCreatedBy() { return this.createdBy; }
     public Instant getUpdatedAt() { return this.updatedAt; }
+    public UUID getUpdatedBy() { return this.updatedBy; }
 }

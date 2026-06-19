@@ -48,8 +48,14 @@ public class DeviceJpaEntity {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    @Column(name = "created_by", nullable = false, updatable = false)
+    private UUID createdBy;
+
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    @Column(name = "updated_by", nullable = false)
+    private UUID updatedBy;
 
     protected DeviceJpaEntity() {}
 
@@ -65,7 +71,9 @@ public class DeviceJpaEntity {
         double warnGasPpm,
         double critGasPpm,
         Instant createdAt,
-        Instant updatedAt
+        UUID createdBy,
+        Instant updatedAt,
+        UUID updatedBy
     ) {
         this.id = id;
         this.organizationId = organizationId;
@@ -78,7 +86,9 @@ public class DeviceJpaEntity {
         this.warnGasPpm = warnGasPpm;
         this.critGasPpm = critGasPpm;
         this.createdAt = createdAt;
+        this.createdBy = createdBy;
         this.updatedAt = updatedAt;
+        this.updatedBy = updatedBy;
     }
 
     public UUID getId() { return this.id; }
@@ -92,5 +102,7 @@ public class DeviceJpaEntity {
     public double getWarnGasPpm() { return this.warnGasPpm; }
     public double getCritGasPpm() { return this.critGasPpm; }
     public Instant getCreatedAt() { return this.createdAt; }
+    public UUID getCreatedBy() { return this.createdBy; }
     public Instant getUpdatedAt() { return this.updatedAt; }
+    public UUID getUpdatedBy() { return this.updatedBy; }
 }

@@ -26,7 +26,7 @@ public record RegisterDeviceRequest(
         double critGasPpm
     ) {}
 
-    public RegisterDeviceCommand toCommand(UUID organizationId) {
+    public RegisterDeviceCommand toCommand(UUID organizationId, UUID requesterId) {
         SafetyThresholds thresholds = this.thresholds == null
                 ? null
                 : new SafetyThresholds(
@@ -34,6 +34,6 @@ public record RegisterDeviceRequest(
                         this.thresholds.critTemperatureC(),
                         this.thresholds.warnGasPpm(),
                         this.thresholds.critGasPpm());
-        return new RegisterDeviceCommand(organizationId, this.code, this.name, thresholds);
+        return new RegisterDeviceCommand(organizationId, this.code, this.name, thresholds, requesterId);
     }
 }

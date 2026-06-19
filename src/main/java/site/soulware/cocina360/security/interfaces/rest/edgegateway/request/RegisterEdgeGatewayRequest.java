@@ -9,7 +9,7 @@ public record RegisterEdgeGatewayRequest(
     @NotBlank String name
 ) {
 
-    public RegisterEdgeGatewayCommand toCommand(UUID organizationId) {
-        return new RegisterEdgeGatewayCommand(organizationId, this.name);
+    public RegisterEdgeGatewayCommand toCommand(UUID organizationId, UUID requesterId) {
+        return new RegisterEdgeGatewayCommand(organizationId, this.name, requesterId);
     }
 }

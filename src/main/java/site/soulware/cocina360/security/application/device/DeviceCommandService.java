@@ -11,6 +11,7 @@ import site.soulware.cocina360.security.domain.model.valueobject.DeviceId;
 import site.soulware.cocina360.security.domain.model.valueobject.SafetyThresholds;
 import site.soulware.cocina360.security.domain.repository.DeviceRepository;
 import site.soulware.cocina360.shared.domain.model.valueobject.OrganizationId;
+import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
 
 @Service
 @Transactional
@@ -36,7 +37,8 @@ public class DeviceCommandService {
                 : SafetyThresholds.defaults();
 
         Device device = Device.register(
-                id, OrganizationId.of(command.organizationId()), code, command.name(), thresholds);
+                id, OrganizationId.of(command.organizationId()), code, command.name(), thresholds,
+                ProfileId.of(command.requesterId()));
 
         this.deviceRepository.save(device);
         device.pullDomainEvents().forEach(this.eventPublisher::publishEvent);
