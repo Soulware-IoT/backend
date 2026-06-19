@@ -1,5 +1,6 @@
 package site.soulware.cocina360.security.interfaces.rest.device.request;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import site.soulware.cocina360.security.domain.model.command.RegisterDeviceCommand;
 import site.soulware.cocina360.security.domain.model.valueobject.SafetyThresholds;
@@ -13,6 +14,8 @@ import java.util.UUID;
 public record RegisterDeviceRequest(
     @NotBlank String code,
     @NotBlank String name,
+    @Schema(description = "Optional. Calibration limits; omit entirely to apply the standard "
+            + "defaults (35/50 °C, 1000/3000 PPM). If provided, all four values are required.")
     Thresholds thresholds
 ) {
 
