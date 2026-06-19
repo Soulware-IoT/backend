@@ -11,7 +11,7 @@ public sealed interface ValidationRules extends ValueObject
 
     record Text(Integer minLength, Integer maxLength, String pattern) implements ValidationRules {}
 
-    record Number(Double min, Double max) implements ValidationRules {}
+    record Number(NumberKind kind, Double min, Double max) implements ValidationRules {}
 
     record Select(List<String> options) implements ValidationRules {}
 }

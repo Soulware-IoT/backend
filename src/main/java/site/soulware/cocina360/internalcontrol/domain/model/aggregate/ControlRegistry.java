@@ -7,6 +7,7 @@ import site.soulware.cocina360.internalcontrol.domain.model.exception.RegistryVa
 import site.soulware.cocina360.internalcontrol.domain.model.valueobject.ControlFormatId;
 import site.soulware.cocina360.internalcontrol.domain.model.valueobject.ControlFormatStatus;
 import site.soulware.cocina360.internalcontrol.domain.model.valueobject.ControlRegistryId;
+import site.soulware.cocina360.internalcontrol.domain.model.valueobject.NumberKind;
 import site.soulware.cocina360.internalcontrol.domain.model.valueobject.ValidationRules;
 import site.soulware.cocina360.shared.domain.model.aggregate.AggregateRoot;
 
@@ -109,6 +110,8 @@ public class ControlRegistry extends AggregateRoot<ControlRegistryId> {
                 }
                 if (field.getValidationRules() instanceof ValidationRules.Number rules) {
                     double d = num.doubleValue();
+                    if (rules.kind() == NumberKind.INTEGER && d != Math.floor(d))
+                        violations.add(new RegistryValidationException.FieldViolation(key, "error.control.registry.field.number.not_integer"));
                     if (rules.min() != null && d < rules.min())
                         violations.add(new RegistryValidationException.FieldViolation(key, "error.control.registry.field.number.min"));
                     if (rules.max() != null && d > rules.max())
