@@ -10,4 +10,6 @@ import java.util.List;
 public interface InvitationRepository extends DomainRepository<Invitation, InvitationId> {
 
     List<Invitation> findAllByOrganizationId(OrganizationId organizationId);
+
+    List<Invitation> findAllByInvitedEmail(String invitedEmail);
 }

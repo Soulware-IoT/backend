@@ -43,6 +43,14 @@ public class InvitationRepositoryAdapter implements InvitationRepository {
                 .toList();
     }
 
+    @Override
+    public List<Invitation> findAllByInvitedEmail(String invitedEmail) {
+        return this.jpaRepository.findAllByInvitedEmail(invitedEmail)
+                .stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
     private InvitationJpaEntity toJpaEntity(Invitation invitation) {
         return new InvitationJpaEntity(
                 invitation.getId().value(),

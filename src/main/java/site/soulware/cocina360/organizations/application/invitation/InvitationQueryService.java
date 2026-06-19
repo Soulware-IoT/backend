@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import site.soulware.cocina360.organizations.domain.model.exception.InvitationNotFoundException;
 import site.soulware.cocina360.organizations.domain.model.query.GetInvitationQuery;
+import site.soulware.cocina360.organizations.domain.model.query.ListInvitationsByInvitedEmailQuery;
 import site.soulware.cocina360.organizations.domain.model.query.ListOrganizationInvitationsQuery;
 import site.soulware.cocina360.organizations.domain.model.valueobject.InvitationId;
 import site.soulware.cocina360.organizations.domain.repository.InvitationRepository;
@@ -29,6 +30,11 @@ public class InvitationQueryService {
 
     public List<InvitationResult> handle(ListOrganizationInvitationsQuery query) {
         return this.invitationRepository.findAllByOrganizationId(OrganizationId.of(query.organizationId()))
+                .stream().map(InvitationResult::from).toList();
+    }
+
+    public List<InvitationResult> handle(ListInvitationsByInvitedEmailQuery query) {
+        return this.invitationRepository.findAllByInvitedEmail(query.invitedEmail())
                 .stream().map(InvitationResult::from).toList();
     }
 }

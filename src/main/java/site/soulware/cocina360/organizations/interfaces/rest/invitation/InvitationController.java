@@ -11,6 +11,7 @@ import site.soulware.cocina360.organizations.domain.model.command.AcceptInvitati
 import site.soulware.cocina360.organizations.domain.model.command.DeclineInvitationCommand;
 import site.soulware.cocina360.organizations.domain.model.query.GetInvitationQuery;
 import site.soulware.cocina360.organizations.domain.model.query.GetOrganizationQuery;
+import site.soulware.cocina360.organizations.domain.model.query.ListInvitationsByInvitedEmailQuery;
 import site.soulware.cocina360.organizations.domain.model.query.ListOrganizationInvitationsQuery;
 import site.soulware.cocina360.organizations.interfaces.rest.invitation.request.InviteRequest;
 import site.soulware.cocina360.organizations.interfaces.rest.invitation.response.InvitationResponse;
@@ -57,6 +58,14 @@ public class InvitationController {
         this.requireOrganization(organizationId);
         return ResponseEntity.ok(
                 this.queryService.handle(new ListOrganizationInvitationsQuery(organizationId))
+                        .stream().map(InvitationResponse::from).toList());
+    }
+
+    @GetMapping("/profiles/{profileId}/invitations")
+    public ResponseEntity<List<InvitationResponse>> listByInvitedUser(@PathVariable UUID profileId) {
+        String invitedEmail = this.profilesApi.requireEmailByProfileId(profileId);
+        return ResponseEntity.ok(
+                this.queryService.handle(new ListInvitationsByInvitedEmailQuery(invitedEmail))
                         .stream().map(InvitationResponse::from).toList());
     }
 
