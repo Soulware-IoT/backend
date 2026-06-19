@@ -4,8 +4,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import site.soulware.cocina360.security.domain.model.aggregate.Device;
-import site.soulware.cocina360.security.domain.model.command.RegisterDeviceCommand;
-import site.soulware.cocina360.security.domain.model.exception.DeviceCodeAlreadyRegisteredException;
+import site.soulware.cocina360.security.domain.model.command.ClaimDeviceCommand;
+import site.soulware.cocina360.security.domain.model.exception.DeviceNotFoundException;
+import site.soulware.cocina360.security.domain.model.valueobject.ApiKey;
 import site.soulware.cocina360.security.domain.model.valueobject.DeviceCode;
 import site.soulware.cocina360.security.domain.model.valueobject.DeviceId;
 import site.soulware.cocina360.security.domain.model.valueobject.SafetyThresholds;
@@ -25,24 +26,48 @@ public class DeviceCommandService {
         this.eventPublisher = eventPublisher;
     }
 
-    public DeviceId handle(RegisterDeviceCommand command) {
-        DeviceCode code = DeviceCode.of(command.code());
-        if (this.deviceRepository.existsByCode(code)) {
-            throw new DeviceCodeAlreadyRegisteredException(code.value());
-        }
+    /**
+     * Factory step: mint a new unassigned device with a generated, unique code + apiKey.
+     * Returns the credentials so they can be burned into the firmware.
+     */
+    public ProvisionedDeviceResult provision() {
+        DeviceCode code = this.uniqueCode();
+        Device device = Device.provision(DeviceId.generate(), code, ApiKey.generate());
 
-        DeviceId id = DeviceId.generate();
+        this.deviceRepository.save(device);
+        device.pullDomainEvents().forEach(this.eventPublisher::publishEvent);
+
+        return ProvisionedDeviceResult.from(device);
+    }
+
+    /**
+     * Claim a previously provisioned device (by code) into an organization.
+     *
+     * @throws DeviceNotFoundException if no device exists with that code.
+     */
+    public DeviceId handle(ClaimDeviceCommand command) {
+        DeviceCode code = DeviceCode.of(command.code());
+        Device device = this.deviceRepository.findByCode(code)
+                .orElseThrow(() -> DeviceNotFoundException.byCode(code.value()));
+
         SafetyThresholds thresholds = command.thresholds() != null
                 ? command.thresholds()
                 : SafetyThresholds.defaults();
 
-        Device device = Device.register(
-                id, OrganizationId.of(command.organizationId()), code, command.name(), thresholds,
+        device.claim(OrganizationId.of(command.organizationId()), command.name(), thresholds,
                 ProfileId.of(command.requesterId()));
 
         this.deviceRepository.save(device);
         device.pullDomainEvents().forEach(this.eventPublisher::publishEvent);
 
-        return id;
+        return device.getId();
+    }
+
+    private DeviceCode uniqueCode() {
+        DeviceCode code = DeviceCode.generate();
+        while (this.deviceRepository.existsByCode(code)) {
+            code = DeviceCode.generate();
+        }
+        return code;
     }
 }

@@ -4,7 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import site.soulware.cocina360.security.domain.model.valueobject.ActivationStatus;
+import site.soulware.cocina360.security.domain.model.valueobject.DeviceStatus;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -16,19 +16,21 @@ public class DeviceJpaEntity {
     @Id
     private UUID id;
 
-    @Column(name = "organization_id", nullable = false)
+    // Null while PROVISIONED (factory step); set when the device is claimed by an org.
+    @Column(name = "organization_id")
     private UUID organizationId;
 
     @Column(nullable = false, unique = true)
     private String code;
 
-    @Column(nullable = false)
+    // Null while PROVISIONED; set at claim.
+    @Column
     private String name;
 
-    // Mapped as varchar via ActivationStatusConverter. If the column is later promoted to
-    // a PostgreSQL native enum, add @ColumnTransformer(write = "?::activation_status").
+    // Mapped as varchar via DeviceStatusConverter. If the column is later promoted to
+    // a PostgreSQL native enum, add @ColumnTransformer(write = "?::device_status").
     @Column(nullable = false)
-    private ActivationStatus status;
+    private DeviceStatus status;
 
     @Column(name = "api_key", nullable = false)
     private String apiKey;
@@ -48,13 +50,15 @@ public class DeviceJpaEntity {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    @Column(name = "created_by", nullable = false, updatable = false)
+    // Null while PROVISIONED; set to the claimer at claim time.
+    @Column(name = "created_by")
     private UUID createdBy;
 
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    @Column(name = "updated_by", nullable = false)
+    // Null while PROVISIONED; set at claim.
+    @Column(name = "updated_by")
     private UUID updatedBy;
 
     protected DeviceJpaEntity() {}
@@ -64,7 +68,7 @@ public class DeviceJpaEntity {
         UUID organizationId,
         String code,
         String name,
-        ActivationStatus status,
+        DeviceStatus status,
         String apiKey,
         int warnTemperatureC,
         int critTemperatureC,
@@ -95,7 +99,7 @@ public class DeviceJpaEntity {
     public UUID getOrganizationId() { return this.organizationId; }
     public String getCode() { return this.code; }
     public String getName() { return this.name; }
-    public ActivationStatus getStatus() { return this.status; }
+    public DeviceStatus getStatus() { return this.status; }
     public String getApiKey() { return this.apiKey; }
     public int getWarnTemperatureC() { return this.warnTemperatureC; }
     public int getCritTemperatureC() { return this.critTemperatureC; }

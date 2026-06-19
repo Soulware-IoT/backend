@@ -13,7 +13,7 @@ import site.soulware.cocina360.security.domain.model.query.GetDeviceQuery;
 import site.soulware.cocina360.security.domain.model.query.GetEdgeGatewayByOrganizationQuery;
 import site.soulware.cocina360.security.domain.model.query.ListDevicesByOrganizationQuery;
 import site.soulware.cocina360.security.domain.model.valueobject.DeviceId;
-import site.soulware.cocina360.security.interfaces.rest.device.request.RegisterDeviceRequest;
+import site.soulware.cocina360.security.interfaces.rest.device.request.ClaimDeviceRequest;
 import site.soulware.cocina360.security.interfaces.rest.device.response.DeviceResponse;
 
 import java.util.List;
@@ -48,9 +48,9 @@ public class DeviceController {
     }
 
     @PostMapping("/organizations/{organizationId}/devices")
-    public ResponseEntity<DeviceResponse> register(
+    public ResponseEntity<DeviceResponse> claim(
         @PathVariable UUID organizationId,
-        @RequestBody @Valid RegisterDeviceRequest request,
+        @RequestBody @Valid ClaimDeviceRequest request,
         @RequestHeader("X-Requester-Id") UUID requesterId
     ) {
         // The requester, organization, and the org's edge gateway must all exist: a device

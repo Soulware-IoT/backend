@@ -1,18 +1,24 @@
 package site.soulware.cocina360.security.application.device;
 
 import site.soulware.cocina360.security.domain.model.aggregate.Device;
-import site.soulware.cocina360.security.domain.model.valueobject.ActivationStatus;
+import site.soulware.cocina360.security.domain.model.valueobject.DeviceStatus;
+import site.soulware.cocina360.shared.domain.model.valueobject.OrganizationId;
+import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
 
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * Management read model for a device. Deliberately excludes the apiKey — the secret
+ * is only exposed once, at the factory provisioning step. Fields that are only set
+ * once a device is claimed (organization, name, audit) are null while provisioned.
+ */
 public record DeviceResult(
     UUID deviceId,
     UUID organizationId,
     String code,
     String name,
-    ActivationStatus status,
-    String apiKey,
+    DeviceStatus status,
     int warnTemperatureC,
     int critTemperatureC,
     double warnGasPpm,
@@ -26,19 +32,26 @@ public record DeviceResult(
     public static DeviceResult from(Device device) {
         return new DeviceResult(
                 device.getId().value(),
-                device.getOrganizationId().value(),
+                value(device.getOrganizationId()),
                 device.getCode().value(),
                 device.getName(),
                 device.getStatus(),
-                device.getApiKey().value(),
                 device.getThresholds().warnTemperatureC(),
                 device.getThresholds().critTemperatureC(),
                 device.getThresholds().warnGasPpm(),
                 device.getThresholds().critGasPpm(),
                 device.getCreatedAt(),
-                device.getCreatedBy().value(),
+                value(device.getCreatedBy()),
                 device.getUpdatedAt(),
-                device.getUpdatedBy().value()
+                value(device.getUpdatedBy())
         );
+    }
+
+    private static UUID value(OrganizationId id) {
+        return id == null ? null : id.value();
+    }
+
+    private static UUID value(ProfileId id) {
+        return id == null ? null : id.value();
     }
 }

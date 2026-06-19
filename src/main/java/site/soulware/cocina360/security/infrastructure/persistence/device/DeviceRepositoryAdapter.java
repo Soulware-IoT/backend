@@ -12,6 +12,7 @@ import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public class DeviceRepositoryAdapter implements DeviceRepository {
@@ -59,7 +60,7 @@ public class DeviceRepositoryAdapter implements DeviceRepository {
         SafetyThresholds thresholds = device.getThresholds();
         return new DeviceJpaEntity(
                 device.getId().value(),
-                device.getOrganizationId().value(),
+                value(device.getOrganizationId()),
                 device.getCode().value(),
                 device.getName(),
                 device.getStatus(),
@@ -69,29 +70,37 @@ public class DeviceRepositoryAdapter implements DeviceRepository {
                 thresholds.warnGasPpm(),
                 thresholds.critGasPpm(),
                 device.getCreatedAt(),
-                device.getCreatedBy().value(),
+                value(device.getCreatedBy()),
                 device.getUpdatedAt(),
-                device.getUpdatedBy().value()
+                value(device.getUpdatedBy())
         );
     }
 
     private Device toDomain(DeviceJpaEntity entity) {
         return Device.rehydrate(
                 DeviceId.of(entity.getId()),
-                OrganizationId.of(entity.getOrganizationId()),
                 DeviceCode.of(entity.getCode()),
+                ApiKey.of(entity.getApiKey()),
+                entity.getOrganizationId() == null ? null : OrganizationId.of(entity.getOrganizationId()),
                 entity.getName(),
                 entity.getStatus(),
-                ApiKey.of(entity.getApiKey()),
                 new SafetyThresholds(
                         entity.getWarnTemperatureC(),
                         entity.getCritTemperatureC(),
                         entity.getWarnGasPpm(),
                         entity.getCritGasPpm()),
                 entity.getCreatedAt(),
-                ProfileId.of(entity.getCreatedBy()),
+                entity.getCreatedBy() == null ? null : ProfileId.of(entity.getCreatedBy()),
                 entity.getUpdatedAt(),
-                ProfileId.of(entity.getUpdatedBy())
+                entity.getUpdatedBy() == null ? null : ProfileId.of(entity.getUpdatedBy())
         );
+    }
+
+    private static UUID value(OrganizationId id) {
+        return id == null ? null : id.value();
+    }
+
+    private static UUID value(ProfileId id) {
+        return id == null ? null : id.value();
     }
 }

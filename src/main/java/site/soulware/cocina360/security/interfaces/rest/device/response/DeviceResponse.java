@@ -1,22 +1,22 @@
 package site.soulware.cocina360.security.interfaces.rest.device.response;
 
 import site.soulware.cocina360.security.application.device.DeviceResult;
-import site.soulware.cocina360.security.domain.model.valueobject.ActivationStatus;
+import site.soulware.cocina360.security.domain.model.valueobject.DeviceStatus;
 
 import java.time.Instant;
 import java.util.UUID;
 
 /**
- * @param apiKey the provisioned device→edge credential. Returned so the owner can flash
- *               the physical device; the edge replicates it to authenticate the device.
+ * Management view of a device. The apiKey is intentionally absent — it is only ever
+ * returned at the factory provisioning step. Organization, name, and audit fields are
+ * null while the device is still {@code PROVISIONED} (unclaimed).
  */
 public record DeviceResponse(
     UUID deviceId,
     UUID organizationId,
     String code,
     String name,
-    ActivationStatus status,
-    String apiKey,
+    DeviceStatus status,
     Thresholds thresholds,
     Instant createdAt,
     UUID createdBy,
@@ -38,7 +38,6 @@ public record DeviceResponse(
                 result.code(),
                 result.name(),
                 result.status(),
-                result.apiKey(),
                 new Thresholds(
                         result.warnTemperatureC(),
                         result.critTemperatureC(),
