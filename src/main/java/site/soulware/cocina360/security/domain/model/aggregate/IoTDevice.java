@@ -5,6 +5,7 @@ import site.soulware.cocina360.security.domain.model.event.IoTDeviceProvisioned;
 import site.soulware.cocina360.security.domain.model.event.IoTDeviceRegistered;
 import site.soulware.cocina360.security.domain.model.event.IoTDeviceThresholdsUpdated;
 import site.soulware.cocina360.security.domain.model.exception.IoTDeviceAlreadyClaimedException;
+import site.soulware.cocina360.security.domain.model.exception.IoTDeviceNotClaimedException;
 import site.soulware.cocina360.security.domain.model.valueobject.ApiKey;
 import site.soulware.cocina360.security.domain.model.valueobject.IoTDeviceCode;
 import site.soulware.cocina360.security.domain.model.valueobject.IoTDeviceId;
@@ -128,7 +129,16 @@ public class IoTDevice extends AggregateRoot<IoTDeviceId> {
         this.touch(updatedBy);
     }
 
+    /**
+     * Recalibrate the device's safety thresholds.
+     *
+     * @throws IoTDeviceNotClaimedException if the device is still {@code PROVISIONED} —
+     *         factory configuration cannot be changed before it is claimed by an org.
+     */
     public void updateThresholds(SafetyThresholds thresholds, ProfileId updatedBy) {
+        if (this.status == IoTDeviceStatus.PROVISIONED) {
+            throw new IoTDeviceNotClaimedException(this.code.value());
+        }
         this.thresholds = thresholds;
         this.touch(updatedBy);
         this.registerEvent(new IoTDeviceThresholdsUpdated(this.id.value(), this.updatedAt));

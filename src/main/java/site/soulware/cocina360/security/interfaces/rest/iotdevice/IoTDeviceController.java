@@ -16,6 +16,7 @@ import site.soulware.cocina360.security.domain.model.query.GetEdgeDeviceByOrgani
 import site.soulware.cocina360.security.domain.model.query.ListDevicesByOrganizationQuery;
 import site.soulware.cocina360.security.domain.model.valueobject.IoTDeviceId;
 import site.soulware.cocina360.security.interfaces.rest.iotdevice.request.ClaimDeviceRequest;
+import site.soulware.cocina360.security.interfaces.rest.iotdevice.request.UpdateThresholdsRequest;
 import site.soulware.cocina360.security.interfaces.rest.iotdevice.response.IoTDeviceResponse;
 
 import java.util.List;
@@ -80,6 +81,23 @@ public class IoTDeviceController {
 
     @GetMapping("/devices/{id}")
     public ResponseEntity<IoTDeviceResponse> getById(@PathVariable UUID id) {
+        return ResponseEntity.ok(
+                IoTDeviceResponse.from(this.queryService.handle(new GetIoTDeviceQuery(id))));
+    }
+
+    @PatchMapping("/devices/{id}/thresholds")
+    public ResponseEntity<IoTDeviceResponse> updateThresholds(
+        @PathVariable UUID id,
+        @RequestBody @Valid UpdateThresholdsRequest request,
+        @RequestHeader("X-Requester-Id") UUID requesterId
+    ) {
+        // The requester and the target device must exist; the command service re-checks the
+        // device on write, but verifying here surfaces a 404 before applying the change.
+        this.profilesApi.requireProfileId(requesterId);
+        this.queryService.handle(new GetIoTDeviceQuery(id));
+
+        this.commandService.handle(request.toCommand(id, requesterId));
+
         return ResponseEntity.ok(
                 IoTDeviceResponse.from(this.queryService.handle(new GetIoTDeviceQuery(id))));
     }

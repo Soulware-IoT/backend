@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import site.soulware.cocina360.security.domain.model.aggregate.IoTDevice;
 import site.soulware.cocina360.security.domain.model.command.ClaimDeviceCommand;
+import site.soulware.cocina360.security.domain.model.command.UpdateIoTDeviceThresholdsCommand;
 import site.soulware.cocina360.security.domain.model.exception.IoTDeviceNotFoundException;
 import site.soulware.cocina360.security.domain.model.valueobject.ApiKey;
 import site.soulware.cocina360.security.domain.model.valueobject.IoTDeviceCode;
@@ -61,6 +62,21 @@ public class IoTDeviceCommandService {
         device.pullDomainEvents().forEach(this.eventPublisher::publishEvent);
 
         return device.getId();
+    }
+
+    /**
+     * Recalibrate a claimed device's safety thresholds.
+     *
+     * @throws IoTDeviceNotFoundException if no device exists with that id.
+     */
+    public void handle(UpdateIoTDeviceThresholdsCommand command) {
+        IoTDevice device = this.deviceRepository.findById(IoTDeviceId.of(command.deviceId()))
+                .orElseThrow(() -> IoTDeviceNotFoundException.byId(command.deviceId()));
+
+        device.updateThresholds(command.thresholds(), ProfileId.of(command.requesterId()));
+
+        this.deviceRepository.save(device);
+        device.pullDomainEvents().forEach(this.eventPublisher::publishEvent);
     }
 
     private IoTDeviceCode uniqueCode() {

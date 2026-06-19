@@ -10,7 +10,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "devices")
+@Table(name = "iot_devices")
 public class IoTDeviceJpaEntity {
 
     @Id
