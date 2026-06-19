@@ -50,22 +50,26 @@ Each business module follows this internal layering:
 │   │   ├── command/      ← command records passed to command services
 │   │   └── query/        ← query records passed to query services
 │   └── repository/       ← repository interfaces (domain contracts, no impl)
-├── application/          ← command and query services; orchestrates domain, publishes events
+├── application/
+│   └── <resource>/       ← one sub-package per aggregate/resource; each contains its command service, query service, and Result records
 ├── infrastructure/
 │   └── persistence/
 │       └── <resource>/   ← one sub-package per aggregate/resource; each contains its JpaEntity, JpaRepository, RepositoryAdapter, and any converters specific to that resource
 └── interfaces/
     └── rest/
-        ├── request/      ← @RequestBody records (validation annotations live here)
-        └── response/     ← response records (from(Result) factory)
+        └── <resource>/   ← one sub-package per aggregate/resource; each contains its Controller plus nested request/ and response/ packages
+            ├── request/  ← @RequestBody records (validation annotations live here)
+            └── response/ ← response records (from(Result) factory)
 ```
+
+The `application/`, `infrastructure/persistence/`, and `interfaces/rest/` layers are all organized into **one sub-package per aggregate/resource** (e.g. `organization`, `organizationmember`, `invitation`). Every class lives under the resource package it belongs to — no loose classes directly in `application/`, `interfaces/rest/`, etc. The resource names match across all three layers.
 
 Rules:
 - The `domain` layer has zero infrastructure or Spring dependencies.
 - `application` services are the only place that coordinate domain objects, repositories, and event publishing.
 - Command services are `@Transactional`; query services are `@Transactional(readOnly = true)`.
 - Controllers call the command service (void), then the query service to return the updated state — two round-trips accepted to keep CQRS boundaries clean.
-- HTTP controllers live in `interfaces/rest/`, not `infrastructure/`. Infrastructure is for JPA only.
+- HTTP controllers live in `interfaces/rest/<resource>/`, not `infrastructure/`. Infrastructure is for JPA only.
 
 ### Aggregate Roots vs Owned Entities
 
