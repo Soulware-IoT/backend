@@ -10,6 +10,6 @@ import site.soulware.cocina360.shared.domain.model.exception.BusinessRuleViolati
 public class IoTDeviceNotClaimedException extends BusinessRuleViolationException {
 
     public IoTDeviceNotClaimedException(String deviceCode) {
-        super("error.device.not_claimed");
+        super("error.iot_device.not_claimed");
     }
 }

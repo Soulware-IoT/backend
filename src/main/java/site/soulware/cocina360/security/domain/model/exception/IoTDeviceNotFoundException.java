@@ -11,10 +11,10 @@ public class IoTDeviceNotFoundException extends EntityNotFoundException {
     }
 
     public static IoTDeviceNotFoundException byId(UUID id) {
-        return new IoTDeviceNotFoundException("error.device.not_found_by_id", id);
+        return new IoTDeviceNotFoundException("error.iot_device.not_found_by_id", id);
     }
 
     public static IoTDeviceNotFoundException byCode(String code) {
-        return new IoTDeviceNotFoundException("error.device.not_found_by_code", code);
+        return new IoTDeviceNotFoundException("error.iot_device.not_found_by_code", code);
     }
 }

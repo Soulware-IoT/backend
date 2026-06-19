@@ -9,6 +9,6 @@ import site.soulware.cocina360.shared.domain.model.exception.BusinessRuleViolati
 public class IoTDeviceAlreadyClaimedException extends BusinessRuleViolationException {
 
     public IoTDeviceAlreadyClaimedException(String deviceCode) {
-        super("error.device.already_claimed");
+        super("error.iot_device.already_claimed");
     }
 }
