@@ -45,6 +45,14 @@ public class OrganizationMemberRepositoryAdapter implements OrganizationMemberRe
                 .toList();
     }
 
+    @Override
+    public List<OrganizationMember> findAllByProfileId(ProfileId profileId) {
+        return this.jpaRepository.findAllByProfileId(profileId.value())
+                .stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
     private OrganizationMemberJpaEntity toJpaEntity(OrganizationMember member) {
         OrganizationMemberPermissions perms = member.getPermissions();
         return new OrganizationMemberJpaEntity(

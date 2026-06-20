@@ -8,11 +8,13 @@ import site.soulware.cocina360.organizations.application.organization.Organizati
 import site.soulware.cocina360.organizations.application.organization.OrganizationQueryService;
 import site.soulware.cocina360.organizations.domain.model.command.DeleteOrganizationCommand;
 import site.soulware.cocina360.organizations.domain.model.query.GetOrganizationQuery;
+import site.soulware.cocina360.organizations.domain.model.query.ListOrganizationsByProfileQuery;
 import site.soulware.cocina360.organizations.interfaces.rest.organization.request.CreateOrganizationRequest;
 import site.soulware.cocina360.organizations.interfaces.rest.organization.request.UpdateOrganizationRequest;
 import site.soulware.cocina360.organizations.interfaces.rest.organization.response.OrganizationResponse;
 import site.soulware.cocina360.profiles.interfaces.acl.ProfilesApi;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -43,6 +45,16 @@ public class OrganizationController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(OrganizationResponse.from(this.queryService.handle(new GetOrganizationQuery(organizationId.value()))));
+    }
+
+    @GetMapping(params = "profileId")
+    public ResponseEntity<List<OrganizationResponse>> listByProfile(@RequestParam UUID profileId) {
+        this.profilesApi.requireProfileId(profileId);
+        List<OrganizationResponse> organizations = this.queryService
+                .handle(new ListOrganizationsByProfileQuery(profileId)).stream()
+                .map(OrganizationResponse::from)
+                .toList();
+        return ResponseEntity.ok(organizations);
     }
 
     @GetMapping("/{id}")
