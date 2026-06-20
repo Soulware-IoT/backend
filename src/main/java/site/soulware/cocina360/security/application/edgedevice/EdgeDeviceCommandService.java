@@ -4,7 +4,10 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import site.soulware.cocina360.security.domain.model.aggregate.EdgeDevice;
+import site.soulware.cocina360.security.domain.model.command.ActivateEdgeDeviceCommand;
 import site.soulware.cocina360.security.domain.model.command.ClaimEdgeDeviceCommand;
+import site.soulware.cocina360.security.domain.model.command.DeactivateEdgeDeviceCommand;
+import site.soulware.cocina360.security.domain.model.command.RenameEdgeDeviceCommand;
 import site.soulware.cocina360.security.domain.model.exception.EdgeDeviceNotFoundException;
 import site.soulware.cocina360.security.domain.model.exception.OrganizationAlreadyHasEdgeDeviceException;
 import site.soulware.cocina360.security.domain.model.valueobject.ApiKey;
@@ -66,6 +69,49 @@ public class EdgeDeviceCommandService {
         edgeDevice.pullDomainEvents().forEach(this.eventPublisher::publishEvent);
 
         return edgeDevice.getId();
+    }
+
+    /**
+     * Rename a claimed edge device.
+     *
+     * @throws EdgeDeviceNotFoundException if no edge device exists with that id.
+     */
+    public void handle(RenameEdgeDeviceCommand command) {
+        EdgeDevice edgeDevice = this.require(command.edgeDeviceId());
+        edgeDevice.rename(command.name(), ProfileId.of(command.requesterId()));
+        this.persist(edgeDevice);
+    }
+
+    /**
+     * Put a claimed edge device back in service.
+     *
+     * @throws EdgeDeviceNotFoundException if no edge device exists with that id.
+     */
+    public void handle(ActivateEdgeDeviceCommand command) {
+        EdgeDevice edgeDevice = this.require(command.edgeDeviceId());
+        edgeDevice.activate(ProfileId.of(command.requesterId()));
+        this.persist(edgeDevice);
+    }
+
+    /**
+     * Take a claimed edge device out of service.
+     *
+     * @throws EdgeDeviceNotFoundException if no edge device exists with that id.
+     */
+    public void handle(DeactivateEdgeDeviceCommand command) {
+        EdgeDevice edgeDevice = this.require(command.edgeDeviceId());
+        edgeDevice.deactivate(ProfileId.of(command.requesterId()));
+        this.persist(edgeDevice);
+    }
+
+    private EdgeDevice require(java.util.UUID edgeDeviceId) {
+        return this.edgeDeviceRepository.findById(EdgeDeviceId.of(edgeDeviceId))
+                .orElseThrow(() -> EdgeDeviceNotFoundException.byId(edgeDeviceId));
+    }
+
+    private void persist(EdgeDevice edgeDevice) {
+        this.edgeDeviceRepository.save(edgeDevice);
+        edgeDevice.pullDomainEvents().forEach(this.eventPublisher::publishEvent);
     }
 
     private EdgeDeviceCode uniqueCode() {

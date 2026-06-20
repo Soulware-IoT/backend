@@ -5,6 +5,7 @@ import site.soulware.cocina360.security.domain.model.event.EdgeDeviceDeactivated
 import site.soulware.cocina360.security.domain.model.event.EdgeDeviceProvisioned;
 import site.soulware.cocina360.security.domain.model.event.EdgeDeviceRegistered;
 import site.soulware.cocina360.security.domain.model.exception.EdgeDeviceAlreadyClaimedException;
+import site.soulware.cocina360.security.domain.model.exception.EdgeDeviceNotClaimedException;
 import site.soulware.cocina360.security.domain.model.valueobject.ApiKey;
 import site.soulware.cocina360.security.domain.model.valueobject.EdgeDeviceCode;
 import site.soulware.cocina360.security.domain.model.valueobject.EdgeDeviceId;
@@ -111,26 +112,52 @@ public class EdgeDevice extends AggregateRoot<EdgeDeviceId> {
                 createdAt, createdBy, updatedAt, updatedBy);
     }
 
+    /**
+     * Rename a claimed edge device.
+     *
+     * @throws EdgeDeviceNotClaimedException if the edge device is still {@code PROVISIONED}.
+     */
     public void rename(String name, ProfileId updatedBy) {
+        this.requireClaimed();
         this.name = name;
         this.touch(updatedBy);
     }
 
+    /**
+     * Put a claimed edge device back in service.
+     *
+     * @throws EdgeDeviceNotClaimedException if the edge device is still {@code PROVISIONED}.
+     */
     public void activate(ProfileId updatedBy) {
+        this.requireClaimed();
         this.status = EdgeDeviceStatus.ACTIVE;
         this.touch(updatedBy);
     }
 
+    /**
+     * Take a claimed edge device out of service; the backend stops trusting its key.
+     *
+     * @throws EdgeDeviceNotClaimedException if the edge device is still {@code PROVISIONED}.
+     */
     public void deactivate(ProfileId updatedBy) {
+        this.requireClaimed();
         this.status = EdgeDeviceStatus.INACTIVE;
         this.touch(updatedBy);
         this.registerEvent(new EdgeDeviceDeactivated(this.id.value(), this.updatedAt));
     }
 
     public void rotateApiKey(ProfileId updatedBy) {
+        this.requireClaimed();
         this.apiKey = ApiKey.generate();
         this.touch(updatedBy);
         this.registerEvent(new EdgeDeviceApiKeyRotated(this.id.value(), this.updatedAt));
+    }
+
+    /** Management operations are only valid once an edge device has been claimed by an org. */
+    private void requireClaimed() {
+        if (this.status == EdgeDeviceStatus.PROVISIONED) {
+            throw new EdgeDeviceNotClaimedException(this.code.value());
+        }
     }
 
     private void touch(ProfileId updatedBy) {
