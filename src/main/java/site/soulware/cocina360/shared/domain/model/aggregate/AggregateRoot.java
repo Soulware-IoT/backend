@@ -5,7 +5,6 @@ import jakarta.persistence.Transient;
 import site.soulware.cocina360.shared.domain.model.event.DomainEvent;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
