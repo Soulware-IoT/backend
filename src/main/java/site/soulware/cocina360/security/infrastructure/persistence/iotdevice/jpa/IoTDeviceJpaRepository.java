@@ -1,4 +1,4 @@
-package site.soulware.cocina360.security.infrastructure.persistence.iotdevice;
+package site.soulware.cocina360.security.infrastructure.persistence.iotdevice.jpa;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

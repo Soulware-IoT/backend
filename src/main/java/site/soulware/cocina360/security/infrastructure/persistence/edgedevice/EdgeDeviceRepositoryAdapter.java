@@ -6,6 +6,8 @@ import site.soulware.cocina360.security.domain.model.valueobject.ApiKey;
 import site.soulware.cocina360.security.domain.model.valueobject.EdgeDeviceCode;
 import site.soulware.cocina360.security.domain.model.valueobject.EdgeDeviceId;
 import site.soulware.cocina360.security.domain.repository.EdgeDeviceRepository;
+import site.soulware.cocina360.security.infrastructure.persistence.edgedevice.jpa.EdgeDeviceJpaEntity;
+import site.soulware.cocina360.security.infrastructure.persistence.edgedevice.jpa.EdgeDeviceJpaRepository;
 import site.soulware.cocina360.shared.domain.model.valueobject.OrganizationId;
 import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
 

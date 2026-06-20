@@ -1,4 +1,4 @@
-package site.soulware.cocina360.organizations.infrastructure.persistence.invitation;
+package site.soulware.cocina360.organizations.infrastructure.persistence.invitation.jpa;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

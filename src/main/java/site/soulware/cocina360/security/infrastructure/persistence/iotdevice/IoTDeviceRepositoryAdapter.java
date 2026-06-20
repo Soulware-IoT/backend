@@ -8,6 +8,8 @@ import site.soulware.cocina360.security.domain.model.valueobject.IoTDeviceCode;
 import site.soulware.cocina360.security.domain.model.valueobject.IoTDeviceId;
 import site.soulware.cocina360.security.domain.model.valueobject.SafetyThresholds;
 import site.soulware.cocina360.security.domain.repository.IoTDeviceRepository;
+import site.soulware.cocina360.security.infrastructure.persistence.iotdevice.jpa.IoTDeviceJpaEntity;
+import site.soulware.cocina360.security.infrastructure.persistence.iotdevice.jpa.IoTDeviceJpaRepository;
 import site.soulware.cocina360.shared.domain.model.valueobject.OrganizationId;
 import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
 

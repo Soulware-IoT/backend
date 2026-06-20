@@ -1,4 +1,4 @@
-package site.soulware.cocina360.security.infrastructure.persistence.edgedevice;
+package site.soulware.cocina360.security.infrastructure.persistence.edgedevice.jpa;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

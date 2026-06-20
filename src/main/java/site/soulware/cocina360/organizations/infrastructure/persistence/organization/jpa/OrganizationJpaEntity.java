@@ -1,4 +1,4 @@
-package site.soulware.cocina360.organizations.infrastructure.persistence.organization;
+package site.soulware.cocina360.organizations.infrastructure.persistence.organization.jpa;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

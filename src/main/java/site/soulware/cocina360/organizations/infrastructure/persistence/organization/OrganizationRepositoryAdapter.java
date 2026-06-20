@@ -3,6 +3,8 @@ package site.soulware.cocina360.organizations.infrastructure.persistence.organiz
 import org.springframework.stereotype.Repository;
 import site.soulware.cocina360.organizations.domain.model.aggregate.Organization;
 import site.soulware.cocina360.organizations.domain.repository.OrganizationRepository;
+import site.soulware.cocina360.organizations.infrastructure.persistence.organization.jpa.OrganizationJpaEntity;
+import site.soulware.cocina360.organizations.infrastructure.persistence.organization.jpa.OrganizationJpaRepository;
 import site.soulware.cocina360.shared.domain.model.valueobject.OrganizationId;
 import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
 

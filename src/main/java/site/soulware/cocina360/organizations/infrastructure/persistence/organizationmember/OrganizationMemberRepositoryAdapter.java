@@ -6,6 +6,8 @@ import site.soulware.cocina360.organizations.domain.model.valueobject.Invitation
 import site.soulware.cocina360.organizations.domain.model.valueobject.OrganizationMemberId;
 import site.soulware.cocina360.organizations.domain.model.valueobject.OrganizationMemberPermissions;
 import site.soulware.cocina360.organizations.domain.repository.OrganizationMemberRepository;
+import site.soulware.cocina360.organizations.infrastructure.persistence.organizationmember.jpa.OrganizationMemberJpaEntity;
+import site.soulware.cocina360.organizations.infrastructure.persistence.organizationmember.jpa.OrganizationMemberJpaRepository;
 import site.soulware.cocina360.shared.domain.model.valueobject.OrganizationId;
 import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
 

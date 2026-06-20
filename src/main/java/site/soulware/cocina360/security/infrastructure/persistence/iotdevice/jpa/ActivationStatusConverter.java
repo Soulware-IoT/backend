@@ -1,4 +1,4 @@
-package site.soulware.cocina360.security.infrastructure.persistence.iotdevice;
+package site.soulware.cocina360.security.infrastructure.persistence.iotdevice.jpa;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;

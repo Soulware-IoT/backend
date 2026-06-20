@@ -1,23 +1,23 @@
-package site.soulware.cocina360.security.infrastructure.persistence.iotdevice;
+package site.soulware.cocina360.security.infrastructure.persistence.edgedevice.jpa;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import site.soulware.cocina360.security.domain.model.valueobject.IoTDeviceStatus;
+import site.soulware.cocina360.security.domain.model.valueobject.EdgeDeviceStatus;
 
 import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "iot_devices")
-public class IoTDeviceJpaEntity {
+@Table(name = "edge_devices")
+public class EdgeDeviceJpaEntity {
 
     @Id
     private UUID id;
 
-    // Null while PROVISIONED (factory step); set when the device is claimed by an org.
-    @Column(name = "organization_id")
+    // Null while PROVISIONED (factory step); set when the edge device is claimed by an org.
+    @Column(name = "organization_id", unique = true)
     private UUID organizationId;
 
     @Column(nullable = false, unique = true)
@@ -27,25 +27,13 @@ public class IoTDeviceJpaEntity {
     @Column
     private String name;
 
-    // Mapped as varchar via IoTDeviceStatusConverter. If the column is later promoted to
-    // a PostgreSQL native enum, add @ColumnTransformer(write = "?::device_status").
+    // Mapped as varchar via EdgeDeviceStatusConverter. If the column is later promoted to
+    // a PostgreSQL native enum, add @ColumnTransformer(write = "?::edge_device_status").
     @Column(nullable = false)
-    private IoTDeviceStatus status;
+    private EdgeDeviceStatus status;
 
     @Column(name = "api_key", nullable = false)
     private String apiKey;
-
-    @Column(name = "warn_temperature_c", nullable = false)
-    private int warnTemperatureC;
-
-    @Column(name = "crit_temperature_c", nullable = false)
-    private int critTemperatureC;
-
-    @Column(name = "warn_gas_ppm", nullable = false)
-    private double warnGasPpm;
-
-    @Column(name = "crit_gas_ppm", nullable = false)
-    private double critGasPpm;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -61,19 +49,15 @@ public class IoTDeviceJpaEntity {
     @Column(name = "updated_by")
     private UUID updatedBy;
 
-    protected IoTDeviceJpaEntity() {}
+    protected EdgeDeviceJpaEntity() {}
 
-    public IoTDeviceJpaEntity(
+    public EdgeDeviceJpaEntity(
         UUID id,
         UUID organizationId,
         String code,
         String name,
-        IoTDeviceStatus status,
+        EdgeDeviceStatus status,
         String apiKey,
-        int warnTemperatureC,
-        int critTemperatureC,
-        double warnGasPpm,
-        double critGasPpm,
         Instant createdAt,
         UUID createdBy,
         Instant updatedAt,
@@ -85,10 +69,6 @@ public class IoTDeviceJpaEntity {
         this.name = name;
         this.status = status;
         this.apiKey = apiKey;
-        this.warnTemperatureC = warnTemperatureC;
-        this.critTemperatureC = critTemperatureC;
-        this.warnGasPpm = warnGasPpm;
-        this.critGasPpm = critGasPpm;
         this.createdAt = createdAt;
         this.createdBy = createdBy;
         this.updatedAt = updatedAt;
@@ -99,12 +79,8 @@ public class IoTDeviceJpaEntity {
     public UUID getOrganizationId() { return this.organizationId; }
     public String getCode() { return this.code; }
     public String getName() { return this.name; }
-    public IoTDeviceStatus getStatus() { return this.status; }
+    public EdgeDeviceStatus getStatus() { return this.status; }
     public String getApiKey() { return this.apiKey; }
-    public int getWarnTemperatureC() { return this.warnTemperatureC; }
-    public int getCritTemperatureC() { return this.critTemperatureC; }
-    public double getWarnGasPpm() { return this.warnGasPpm; }
-    public double getCritGasPpm() { return this.critGasPpm; }
     public Instant getCreatedAt() { return this.createdAt; }
     public UUID getCreatedBy() { return this.createdBy; }
     public Instant getUpdatedAt() { return this.updatedAt; }

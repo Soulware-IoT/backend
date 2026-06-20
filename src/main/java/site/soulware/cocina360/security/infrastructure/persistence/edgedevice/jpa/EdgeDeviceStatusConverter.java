@@ -1,4 +1,4 @@
-package site.soulware.cocina360.security.infrastructure.persistence.edgedevice;
+package site.soulware.cocina360.security.infrastructure.persistence.edgedevice.jpa;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
