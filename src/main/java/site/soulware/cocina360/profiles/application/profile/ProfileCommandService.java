@@ -23,6 +23,7 @@ public class ProfileCommandService {
 
     public void handle(UpdateProfileDetailsCommand command) {
         Profile profile = this.findOrThrow(ProfileId.of(command.profileId()));
+        profile.requireSelf(ProfileId.of(command.requesterId()));
 
         profile.updateDetails(command.fullName(), command.preferredName(), command.avatarUrl());
 

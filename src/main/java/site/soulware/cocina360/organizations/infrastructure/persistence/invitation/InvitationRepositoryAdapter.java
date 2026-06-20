@@ -4,6 +4,8 @@ import org.springframework.stereotype.Repository;
 import site.soulware.cocina360.organizations.domain.model.aggregate.Invitation;
 import site.soulware.cocina360.organizations.domain.model.valueobject.InvitationId;
 import site.soulware.cocina360.organizations.domain.repository.InvitationRepository;
+import site.soulware.cocina360.organizations.infrastructure.persistence.invitation.jpa.InvitationJpaEntity;
+import site.soulware.cocina360.organizations.infrastructure.persistence.invitation.jpa.InvitationJpaRepository;
 import site.soulware.cocina360.shared.domain.model.valueobject.OrganizationId;
 import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
 
@@ -38,6 +40,14 @@ public class InvitationRepositoryAdapter implements InvitationRepository {
     @Override
     public List<Invitation> findAllByOrganizationId(OrganizationId organizationId) {
         return this.jpaRepository.findAllByOrganizationId(organizationId.value())
+                .stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<Invitation> findAllByInvitedEmail(String invitedEmail) {
+        return this.jpaRepository.findAllByInvitedEmail(invitedEmail)
                 .stream()
                 .map(this::toDomain)
                 .toList();

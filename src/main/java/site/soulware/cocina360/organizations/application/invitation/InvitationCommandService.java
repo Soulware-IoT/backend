@@ -15,6 +15,7 @@ import site.soulware.cocina360.organizations.domain.model.valueobject.Permission
 import site.soulware.cocina360.organizations.domain.model.valueobject.OrganizationMemberPermissions;
 import site.soulware.cocina360.organizations.domain.repository.InvitationRepository;
 import site.soulware.cocina360.organizations.domain.repository.OrganizationMemberRepository;
+import site.soulware.cocina360.profiles.interfaces.acl.ProfilesApi;
 import site.soulware.cocina360.shared.domain.model.valueobject.OrganizationId;
 import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
 
@@ -24,15 +25,18 @@ public class InvitationCommandService {
 
     private final InvitationRepository invitationRepository;
     private final OrganizationMemberRepository memberRepository;
+    private final ProfilesApi profilesApi;
     private final ApplicationEventPublisher eventPublisher;
 
     public InvitationCommandService(
         InvitationRepository invitationRepository,
         OrganizationMemberRepository memberRepository,
+        ProfilesApi profilesApi,
         ApplicationEventPublisher eventPublisher
     ) {
         this.invitationRepository = invitationRepository;
         this.memberRepository = memberRepository;
+        this.profilesApi = profilesApi;
         this.eventPublisher = eventPublisher;
     }
 
@@ -49,6 +53,7 @@ public class InvitationCommandService {
 
     public void handle(AcceptInvitationCommand command) {
         Invitation invitation = this.findOrThrow(InvitationId.of(command.invitationId()));
+        invitation.requireInvitedEmail(this.profilesApi.requireEmailByProfileId(command.acceptingProfileId()));
         invitation.accept();
 
         this.invitationRepository.save(invitation);
@@ -69,6 +74,7 @@ public class InvitationCommandService {
 
     public void handle(DeclineInvitationCommand command) {
         Invitation invitation = this.findOrThrow(InvitationId.of(command.invitationId()));
+        invitation.requireInvitedEmail(this.profilesApi.requireEmailByProfileId(command.requesterId()));
         invitation.decline();
 
         this.invitationRepository.save(invitation);

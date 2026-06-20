@@ -4,6 +4,8 @@ import org.springframework.stereotype.Repository;
 import site.soulware.cocina360.profiles.domain.model.aggregate.Profile;
 import site.soulware.cocina360.profiles.domain.model.valueobject.Email;
 import site.soulware.cocina360.profiles.domain.repository.ProfileRepository;
+import site.soulware.cocina360.profiles.infrastructure.persistence.profile.jpa.ProfileJpaEntity;
+import site.soulware.cocina360.profiles.infrastructure.persistence.profile.jpa.ProfileJpaRepository;
 import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
 
 import java.util.Collection;

@@ -34,6 +34,11 @@ class ProfilesApiImpl implements ProfilesApi {
     }
 
     @Override
+    public String requireEmailByProfileId(UUID profileId) {
+        return this.queryService.handle(new GetProfileQuery(profileId)).email();
+    }
+
+    @Override
     public Map<UUID, ProfileSummary> findProfiles(Collection<UUID> profileIds) {
         return this.queryService.handle(new ListProfilesByIdsQuery(profileIds)).stream()
                 .map(result -> new ProfileSummary(

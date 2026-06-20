@@ -6,6 +6,8 @@ import site.soulware.cocina360.organizations.domain.model.valueobject.Invitation
 import site.soulware.cocina360.organizations.domain.model.valueobject.OrganizationMemberId;
 import site.soulware.cocina360.organizations.domain.model.valueobject.OrganizationMemberPermissions;
 import site.soulware.cocina360.organizations.domain.repository.OrganizationMemberRepository;
+import site.soulware.cocina360.organizations.infrastructure.persistence.organizationmember.jpa.OrganizationMemberJpaEntity;
+import site.soulware.cocina360.organizations.infrastructure.persistence.organizationmember.jpa.OrganizationMemberJpaRepository;
 import site.soulware.cocina360.shared.domain.model.valueobject.OrganizationId;
 import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
 
@@ -40,6 +42,14 @@ public class OrganizationMemberRepositoryAdapter implements OrganizationMemberRe
     @Override
     public List<OrganizationMember> findAllByOrganizationId(OrganizationId organizationId) {
         return this.jpaRepository.findAllByOrganizationId(organizationId.value())
+                .stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<OrganizationMember> findAllByProfileId(ProfileId profileId) {
+        return this.jpaRepository.findAllByProfileId(profileId.value())
                 .stream()
                 .map(this::toDomain)
                 .toList();

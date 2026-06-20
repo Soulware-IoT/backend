@@ -11,6 +11,7 @@ import site.soulware.cocina360.organizations.domain.model.command.AcceptInvitati
 import site.soulware.cocina360.organizations.domain.model.command.DeclineInvitationCommand;
 import site.soulware.cocina360.organizations.domain.model.query.GetInvitationQuery;
 import site.soulware.cocina360.organizations.domain.model.query.GetOrganizationQuery;
+import site.soulware.cocina360.organizations.domain.model.query.ListInvitationsByInvitedEmailQuery;
 import site.soulware.cocina360.organizations.domain.model.query.ListOrganizationInvitationsQuery;
 import site.soulware.cocina360.organizations.interfaces.rest.invitation.request.InviteRequest;
 import site.soulware.cocina360.organizations.interfaces.rest.invitation.response.InvitationResponse;
@@ -60,6 +61,14 @@ public class InvitationController {
                         .stream().map(InvitationResponse::from).toList());
     }
 
+    @GetMapping("/profiles/{profileId}/invitations")
+    public ResponseEntity<List<InvitationResponse>> listByInvitedUser(@PathVariable UUID profileId) {
+        String invitedEmail = this.profilesApi.requireEmailByProfileId(profileId);
+        return ResponseEntity.ok(
+                this.queryService.handle(new ListInvitationsByInvitedEmailQuery(invitedEmail))
+                        .stream().map(InvitationResponse::from).toList());
+    }
+
     @GetMapping("/invitations/{id}")
     public ResponseEntity<InvitationResponse> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(
@@ -80,8 +89,12 @@ public class InvitationController {
     }
 
     @PostMapping("/invitations/{id}/decline")
-    public ResponseEntity<InvitationResponse> decline(@PathVariable UUID id) {
-        this.commandService.handle(new DeclineInvitationCommand(id));
+    public ResponseEntity<InvitationResponse> decline(
+        @PathVariable UUID id,
+        @RequestHeader("X-Requester-Id") UUID requesterId
+    ) {
+        this.profilesApi.requireProfileId(requesterId);
+        this.commandService.handle(new DeclineInvitationCommand(id, requesterId));
 
         return ResponseEntity.ok(
                 InvitationResponse.from(this.queryService.handle(new GetInvitationQuery(id))));

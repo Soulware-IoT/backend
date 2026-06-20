@@ -41,9 +41,10 @@ public class ProfileController {
     @PatchMapping("/{id}")
     public ResponseEntity<ProfileResponse> updateDetails(
             @PathVariable UUID id,
-            @RequestBody @Valid UpdateProfileDetailsRequest request) {
+            @RequestBody @Valid UpdateProfileDetailsRequest request,
+            @RequestHeader("X-Requester-Id") UUID requesterId) {
 
-        this.commandService.handle(request.toCommand(id));
+        this.commandService.handle(request.toCommand(id, requesterId));
 
         return ResponseEntity.ok(
                 ProfileResponse.from(this.queryService.handle(new GetProfileQuery(id)))
