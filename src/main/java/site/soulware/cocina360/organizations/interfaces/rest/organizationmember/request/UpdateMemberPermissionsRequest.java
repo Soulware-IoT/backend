@@ -8,11 +8,11 @@ import java.util.UUID;
 
 public record UpdateMemberPermissionsRequest(
         @NotNull PermissionLevel security,
-        @NotNull PermissionLevel iot,
+        @NotNull PermissionLevel organizations,
         @NotNull PermissionLevel internalControl
 ) {
     public UpdateMemberPermissionsCommand toCommand(UUID organizationId, UUID memberId) {
         return new UpdateMemberPermissionsCommand(organizationId, memberId,
-                this.security, this.iot, this.internalControl);
+                this.security, this.organizations, this.internalControl);
     }
 }

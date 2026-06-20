@@ -64,7 +64,7 @@ public class OrganizationMemberRepositoryAdapter implements OrganizationMemberRe
                 member.getInvitationId() != null ? member.getInvitationId().value() : null,
                 member.getJoinedAt(),
                 perms.security(),
-                perms.iot(),
+                perms.organizations(),
                 perms.internalControl()
         );
     }
@@ -72,7 +72,7 @@ public class OrganizationMemberRepositoryAdapter implements OrganizationMemberRe
     private OrganizationMember toDomain(OrganizationMemberJpaEntity entity) {
         OrganizationMemberPermissions permissions = new OrganizationMemberPermissions(
                 entity.getSecurity(),
-                entity.getIot(),
+                entity.getOrganizations(),
                 entity.getInternalControl()
         );
         return OrganizationMember.rehydrate(

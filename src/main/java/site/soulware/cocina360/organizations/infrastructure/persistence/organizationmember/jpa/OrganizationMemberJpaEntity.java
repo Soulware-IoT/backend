@@ -8,6 +8,7 @@ import jakarta.persistence.SecondaryTable;
 import jakarta.persistence.SecondaryTables;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.ColumnTransformer;
+import org.hibernate.annotations.SecondaryRow;
 import site.soulware.cocina360.organizations.domain.model.valueobject.PermissionLevel;
 
 import java.time.Instant;
@@ -21,6 +22,7 @@ import java.util.UUID;
         pkJoinColumns = @PrimaryKeyJoinColumn(name = "organization_member_id")
     )
 })
+@SecondaryRow(table = "organization_member_permissions", optional = false)
 public class OrganizationMemberJpaEntity {
 
     @Id
@@ -42,9 +44,9 @@ public class OrganizationMemberJpaEntity {
     @ColumnTransformer(write = "?::permission_level")
     private PermissionLevel security;
 
-    @Column(table = "organization_member_permissions", name = "iot", nullable = false)
+    @Column(table = "organization_member_permissions", name = "organizations", nullable = false)
     @ColumnTransformer(write = "?::permission_level")
-    private PermissionLevel iot;
+    private PermissionLevel organizations;
 
     @Column(table = "organization_member_permissions", name = "internal_control", nullable = false)
     @ColumnTransformer(write = "?::permission_level")
@@ -59,7 +61,7 @@ public class OrganizationMemberJpaEntity {
         UUID invitationId,
         Instant joinedAt,
         PermissionLevel security,
-        PermissionLevel iot,
+        PermissionLevel organizations,
         PermissionLevel internalControl
     ) {
         this.id = id;
@@ -68,7 +70,7 @@ public class OrganizationMemberJpaEntity {
         this.invitationId = invitationId;
         this.joinedAt = joinedAt;
         this.security = security;
-        this.iot = iot;
+        this.organizations = organizations;
         this.internalControl = internalControl;
     }
 
@@ -78,6 +80,6 @@ public class OrganizationMemberJpaEntity {
     public UUID getInvitationId() { return this.invitationId; }
     public Instant getJoinedAt() { return this.joinedAt; }
     public PermissionLevel getSecurity() { return this.security; }
-    public PermissionLevel getIot() { return this.iot; }
+    public PermissionLevel getOrganizations() { return this.organizations; }
     public PermissionLevel getInternalControl() { return this.internalControl; }
 }

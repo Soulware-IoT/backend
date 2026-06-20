@@ -34,8 +34,8 @@ public class OrganizationMemberCommandService {
     public void handle(UpdateMemberPermissionsCommand command) {
         OrganizationMember member = this.findOrThrow(OrganizationMemberId.of(command.memberId()));
 
-        member.updatePermissions(new OrganizationMemberPermissions(
-                command.security(), command.iot(), command.internalControl()));
+        member.updatePermissions(OrganizationMemberPermissions.requireNonAdmin(
+                command.security(), command.organizations(), command.internalControl()));
 
         this.memberRepository.save(member);
         member.pullDomainEvents().forEach(this.eventPublisher::publishEvent);
