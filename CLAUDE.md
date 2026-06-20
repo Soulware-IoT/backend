@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-`cocina360` is a Spring Boot 4.1 backend (Java 25) structured as a **modular monolith** using Spring Modulith, following **Domain-Driven Design (DDD)**. Persistence is backed by **Supabase** (PostgreSQL) used purely as a persistence layer — no Supabase-specific features (auth, realtime, storage) are used from the backend.
+`cocina360` is a Spring Boot 4.1 backend (Java 21) structured as a **modular monolith** using Spring Modulith, following **Domain-Driven Design (DDD)**. Persistence is backed by **Supabase** (PostgreSQL) used purely as a persistence layer — no Supabase-specific features (auth, realtime, storage) are used from the backend.
 
 ## Commands
 
