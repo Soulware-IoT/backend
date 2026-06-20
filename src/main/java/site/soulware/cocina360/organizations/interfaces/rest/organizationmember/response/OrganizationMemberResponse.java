@@ -13,7 +13,7 @@ public record OrganizationMemberResponse(
         UUID invitationId,
         Instant joinedAt,
         PermissionLevel securityPermission,
-        PermissionLevel iotPermission,
+        PermissionLevel organizationsPermission,
         PermissionLevel internalControlPermission,
         ProfileSummary profile
 ) {
@@ -21,7 +21,7 @@ public record OrganizationMemberResponse(
         return new OrganizationMemberResponse(result.id(), result.organizationId(),
                 result.invitationId(), result.joinedAt(),
                 result.permissions().security(),
-                result.permissions().iot(),
+                result.permissions().organizations(),
                 result.permissions().internalControl(),
                 result.profile());
     }
