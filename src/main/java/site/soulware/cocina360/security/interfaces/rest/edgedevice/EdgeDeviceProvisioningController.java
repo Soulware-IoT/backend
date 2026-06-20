@@ -20,7 +20,7 @@ import site.soulware.cocina360.security.interfaces.rest.edgedevice.response.Prov
  */
 @RestController
 @Tag(name = "edge-device-provisioning-controller")
-@RequestMapping("/internal/edge-devices")
+@RequestMapping("/internal/edge-device")
 public class EdgeDeviceProvisioningController {
 
     private final EdgeDeviceCommandService commandService;

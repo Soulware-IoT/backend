@@ -24,7 +24,7 @@ import java.util.UUID;
 
 /**
  * IoTDevices are org-owned, so registration and org-scoped access are nested under
- * {@code /organizations/{organizationId}/devices}. A direct by-id lookup is also
+ * {@code /organizations/{organizationId}/iot-devices}. A direct by-id lookup is also
  * exposed for management/admin access.
  */
 @Tag(name = "iot-device-controller")
@@ -51,7 +51,7 @@ public class IoTDeviceController {
         this.profilesApi = profilesApi;
     }
 
-    @PostMapping("/organizations/{organizationId}/devices")
+    @PostMapping("/organizations/{organizationId}/iot-devices")
     public ResponseEntity<IoTDeviceResponse> claim(
         @PathVariable UUID organizationId,
         @RequestBody @Valid ClaimDeviceRequest request,
@@ -69,7 +69,7 @@ public class IoTDeviceController {
                 .body(IoTDeviceResponse.from(this.queryService.handle(new GetIoTDeviceQuery(deviceId.value()))));
     }
 
-    @GetMapping("/organizations/{organizationId}/devices")
+    @GetMapping("/organizations/{organizationId}/iot-devices")
     public ResponseEntity<List<IoTDeviceResponse>> listByOrganization(@PathVariable UUID organizationId) {
         this.organizationsApi.requireOrganizationId(organizationId);
         List<IoTDeviceResponse> devices = this.queryService
@@ -79,7 +79,7 @@ public class IoTDeviceController {
         return ResponseEntity.ok(devices);
     }
 
-    @GetMapping("/devices/{id}")
+    @GetMapping("/iot-devices/{id}")
     public ResponseEntity<IoTDeviceResponse> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(
                 IoTDeviceResponse.from(this.queryService.handle(new GetIoTDeviceQuery(id))));
@@ -89,7 +89,7 @@ public class IoTDeviceController {
      * Partial update of a claimed device: any of name, thresholds, and activation status.
      * Omitted fields are left unchanged.
      */
-    @PatchMapping("/devices/{id}")
+    @PatchMapping("/iot-devices/{id}")
     public ResponseEntity<IoTDeviceResponse> update(
         @PathVariable UUID id,
         @RequestBody @Valid UpdateIoTDeviceRequest request,

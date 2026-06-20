@@ -19,7 +19,7 @@ import site.soulware.cocina360.security.interfaces.rest.iotdevice.response.Provi
  */
 @RestController
 @Tag(name="iot-device-provisioning-controller")
-@RequestMapping("/internal/devices")
+@RequestMapping("/internal/iot-devices")
 public class IoTDeviceProvisioningController {
 
     private final IoTDeviceCommandService commandService;

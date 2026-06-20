@@ -14,7 +14,7 @@ import java.time.Instant;
  * a meaningful transition. A {@code CRITICAL} reading raises
  * {@link CriticalReadingDetected} to drive alerts/notifications.
  *
- * @param occurredAt when the reading happened at the edge/device
+ * @param occurredAt when the reading happened at the edge/iot-device
  * @param recordedAt when this backend persisted it
  */
 public class Reading extends AggregateRoot<ReadingId> {

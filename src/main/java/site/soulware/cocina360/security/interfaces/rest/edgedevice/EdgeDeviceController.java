@@ -64,7 +64,7 @@ public class EdgeDeviceController {
                 EdgeDeviceResponse.from(this.queryService.handle(new GetEdgeDeviceByOrganizationQuery(organizationId))));
     }
 
-    @GetMapping("/edge-devices/{id}")
+    @GetMapping("/edge-device/{id}")
     public ResponseEntity<EdgeDeviceResponse> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(
                 EdgeDeviceResponse.from(this.queryService.handle(new GetEdgeDeviceQuery(id))));
@@ -74,7 +74,7 @@ public class EdgeDeviceController {
      * Partial update of a claimed edge device: any of name and activation status.
      * Omitted fields are left unchanged.
      */
-    @PatchMapping("/edge-devices/{id}")
+    @PatchMapping("/edge-device/{id}")
     public ResponseEntity<EdgeDeviceResponse> update(
         @PathVariable UUID id,
         @RequestBody @Valid UpdateEdgeDeviceRequest request,
