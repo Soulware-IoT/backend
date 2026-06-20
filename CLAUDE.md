@@ -54,7 +54,12 @@ Each business module follows this internal layering:
 │   └── <resource>/       ← one sub-package per aggregate/resource; each contains its command service, query service, and Result records
 ├── infrastructure/
 │   └── persistence/
-│       └── <resource>/   ← one sub-package per aggregate/resource; each contains its JpaEntity, JpaRepository, RepositoryAdapter, and any converters specific to that resource
+│       └── <resource>/   ← one sub-package per aggregate/resource; holds its
+│           │               RepositoryAdapter (engine-agnostic seam implementing the
+│           │               domain repository contract) at the root, with engine-
+│           │               specific classes nested in a storage sub-package:
+│           ├── jpa/      ← Postgres-backed: JpaEntity, JpaRepository, converters
+│           └── mongodb/  ← Mongo-backed: Document, Spring Data MongoRepository
 └── interfaces/
     └── rest/
         └── <resource>/   ← one sub-package per aggregate/resource; each contains its Controller plus nested request/ and response/ packages
@@ -63,6 +68,8 @@ Each business module follows this internal layering:
 ```
 
 The `application/`, `infrastructure/persistence/`, and `interfaces/rest/` layers are all organized into **one sub-package per aggregate/resource** (e.g. `organization`, `organizationmember`, `invitation`). Every class lives under the resource package it belongs to — no loose classes directly in `application/`, `interfaces/rest/`, etc. The resource names match across all three layers.
+
+Within `infrastructure/persistence/<resource>/`, the layer is **further split by storage engine**: the `RepositoryAdapter` stays at the resource root (it implements the domain repository contract and is the engine-agnostic seam), while the engine-specific classes nest in an engine sub-package — `jpa/` (JpaEntity, JpaRepository, converters) or `mongodb/` (Document, MongoRepository). This keeps a resource's storage technology explicit and isolated, and lets an aggregate be migrated or split across engines without touching the domain `repository/` contract.
 
 Rules:
 - The `domain` layer has zero infrastructure or Spring dependencies.
@@ -198,6 +205,14 @@ Authentication and authorization are **out of scope** for this service. An API g
 - `ddl-auto=none`: schema is managed externally (migrations via Flyway or Supabase dashboard SQL editor).
 - JPA/Hibernate is confined to the `infrastructure` layer of each module. Domain objects are mapped via `@MappedSuperclass` from the shared base classes.
 
+#### Polyglot persistence (PostgreSQL + MongoDB)
+
+PostgreSQL/JPA is the **default** store for identity and transactional aggregates (organizations, profiles, edge/IoT devices). One aggregate uses a different engine: the `security` context's **`Reading`** ledger — high-volume safety telemetry forwarded from the edge — is persisted to **MongoDB**.
+
+- Engine selection is a **per-resource infrastructure detail**, expressed solely by the `jpa/` vs `mongodb/` sub-package under `infrastructure/persistence/<resource>/`. The domain `repository/` interface stays storage-agnostic: `ReadingRepositoryAdapter` implements the same `ReadingRepository` contract a JPA adapter would, so the domain and application layers are unaware of the engine.
+- Mongo connection is configured via the `MONGODB_URI` env var (see Environment Variables). As with Postgres, schema/collection management is external — the application is the source of truth for document contents.
+- The PostgreSQL-specific conventions below (enum write-casts, trigger/RLS exclusions) apply only to JPA-backed tables, not to Mongo collections.
+
 #### PostgreSQL enum columns
 
 The database defines several native `enum` types (e.g. `permission_level`, `invitation_status`). The PostgreSQL JDBC driver always sends `String`-converted values as `varchar`, and PostgreSQL **never** implicitly casts `varchar → <named enum>`, so a bare insert fails with `column "x" is of type <enum> but expression is of type character varying`.
@@ -242,3 +257,4 @@ public static ControlFormat rehydrate(
 | `DB_URL` | `jdbc:postgresql://<pooler-host>:5432/postgres?sslmode=require&prepareThreshold=0` |
 | `DB_USERNAME` | `postgres.<project-ref>` (pooler format) |
 | `DB_PASSWORD` | Supabase DB password |
+| `MONGODB_URI` | `mongodb://<host>:27017/cocina360` (telemetry `Reading` store) |
