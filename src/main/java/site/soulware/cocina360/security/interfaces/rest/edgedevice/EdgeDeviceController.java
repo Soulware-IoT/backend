@@ -10,11 +10,9 @@ import site.soulware.cocina360.security.application.edgedevice.EdgeDeviceCommand
 import site.soulware.cocina360.security.application.edgedevice.EdgeDeviceQueryService;
 import site.soulware.cocina360.security.domain.model.query.GetEdgeDeviceByOrganizationQuery;
 import site.soulware.cocina360.security.domain.model.query.GetEdgeDeviceQuery;
-import site.soulware.cocina360.security.domain.model.command.ActivateEdgeDeviceCommand;
-import site.soulware.cocina360.security.domain.model.command.DeactivateEdgeDeviceCommand;
 import site.soulware.cocina360.security.domain.model.valueobject.EdgeDeviceId;
 import site.soulware.cocina360.security.interfaces.rest.edgedevice.request.ClaimEdgeDeviceRequest;
-import site.soulware.cocina360.security.interfaces.rest.edgedevice.request.RenameEdgeDeviceRequest;
+import site.soulware.cocina360.security.interfaces.rest.edgedevice.request.UpdateEdgeDeviceRequest;
 import site.soulware.cocina360.security.interfaces.rest.edgedevice.response.EdgeDeviceResponse;
 
 import java.util.UUID;
@@ -72,44 +70,20 @@ public class EdgeDeviceController {
                 EdgeDeviceResponse.from(this.queryService.handle(new GetEdgeDeviceQuery(id))));
     }
 
-    @PatchMapping("/edge-devices/{id}/name")
-    public ResponseEntity<EdgeDeviceResponse> rename(
+    /**
+     * Partial update of a claimed edge device: any of name and activation status.
+     * Omitted fields are left unchanged.
+     */
+    @PatchMapping("/edge-devices/{id}")
+    public ResponseEntity<EdgeDeviceResponse> update(
         @PathVariable UUID id,
-        @RequestBody @Valid RenameEdgeDeviceRequest request,
+        @RequestBody @Valid UpdateEdgeDeviceRequest request,
         @RequestHeader("X-Requester-Id") UUID requesterId
     ) {
         this.profilesApi.requireProfileId(requesterId);
         this.queryService.handle(new GetEdgeDeviceQuery(id));
 
         this.commandService.handle(request.toCommand(id, requesterId));
-
-        return ResponseEntity.ok(
-                EdgeDeviceResponse.from(this.queryService.handle(new GetEdgeDeviceQuery(id))));
-    }
-
-    @PostMapping("/edge-devices/{id}/activate")
-    public ResponseEntity<EdgeDeviceResponse> activate(
-        @PathVariable UUID id,
-        @RequestHeader("X-Requester-Id") UUID requesterId
-    ) {
-        this.profilesApi.requireProfileId(requesterId);
-        this.queryService.handle(new GetEdgeDeviceQuery(id));
-
-        this.commandService.handle(new ActivateEdgeDeviceCommand(id, requesterId));
-
-        return ResponseEntity.ok(
-                EdgeDeviceResponse.from(this.queryService.handle(new GetEdgeDeviceQuery(id))));
-    }
-
-    @PostMapping("/edge-devices/{id}/deactivate")
-    public ResponseEntity<EdgeDeviceResponse> deactivate(
-        @PathVariable UUID id,
-        @RequestHeader("X-Requester-Id") UUID requesterId
-    ) {
-        this.profilesApi.requireProfileId(requesterId);
-        this.queryService.handle(new GetEdgeDeviceQuery(id));
-
-        this.commandService.handle(new DeactivateEdgeDeviceCommand(id, requesterId));
 
         return ResponseEntity.ok(
                 EdgeDeviceResponse.from(this.queryService.handle(new GetEdgeDeviceQuery(id))));

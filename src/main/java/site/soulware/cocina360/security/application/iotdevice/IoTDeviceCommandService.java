@@ -4,11 +4,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import site.soulware.cocina360.security.domain.model.aggregate.IoTDevice;
-import site.soulware.cocina360.security.domain.model.command.ActivateIoTDeviceCommand;
 import site.soulware.cocina360.security.domain.model.command.ClaimDeviceCommand;
-import site.soulware.cocina360.security.domain.model.command.DeactivateIoTDeviceCommand;
-import site.soulware.cocina360.security.domain.model.command.RenameIoTDeviceCommand;
-import site.soulware.cocina360.security.domain.model.command.UpdateIoTDeviceThresholdsCommand;
+import site.soulware.cocina360.security.domain.model.command.UpdateIoTDeviceCommand;
 import site.soulware.cocina360.security.domain.model.exception.IoTDeviceNotFoundException;
 import site.soulware.cocina360.security.domain.model.valueobject.ApiKey;
 import site.soulware.cocina360.security.domain.model.valueobject.IoTDeviceCode;
@@ -70,50 +67,29 @@ public class IoTDeviceCommandService {
     }
 
     /**
-     * Recalibrate a claimed device's safety thresholds.
+     * Partial update of a claimed device: applies whichever of name, thresholds, and
+     * activation status are present, each audited to the requester.
      *
      * @throws IoTDeviceNotFoundException if no device exists with that id.
      */
-    public void handle(UpdateIoTDeviceThresholdsCommand command) {
-        IoTDevice device = this.deviceRepository.findById(IoTDeviceId.of(command.deviceId()))
-                .orElseThrow(() -> IoTDeviceNotFoundException.byId(command.deviceId()));
-
-        device.updateThresholds(command.thresholds(), ProfileId.of(command.requesterId()));
-
-        this.deviceRepository.save(device);
-        device.pullDomainEvents().forEach(this.eventPublisher::publishEvent);
-    }
-
-    /**
-     * Rename a claimed device.
-     *
-     * @throws IoTDeviceNotFoundException if no device exists with that id.
-     */
-    public void handle(RenameIoTDeviceCommand command) {
+    public void handle(UpdateIoTDeviceCommand command) {
         IoTDevice device = this.require(command.deviceId());
-        device.rename(command.name(), ProfileId.of(command.requesterId()));
-        this.persist(device);
-    }
+        ProfileId requesterId = ProfileId.of(command.requesterId());
 
-    /**
-     * Put a claimed device back in service.
-     *
-     * @throws IoTDeviceNotFoundException if no device exists with that id.
-     */
-    public void handle(ActivateIoTDeviceCommand command) {
-        IoTDevice device = this.require(command.deviceId());
-        device.activate(ProfileId.of(command.requesterId()));
-        this.persist(device);
-    }
+        if (command.name() != null) {
+            device.rename(command.name(), requesterId);
+        }
+        if (command.thresholds() != null) {
+            device.updateThresholds(command.thresholds(), requesterId);
+        }
+        if (command.activate() != null) {
+            if (command.activate()) {
+                device.activate(requesterId);
+            } else {
+                device.deactivate(requesterId);
+            }
+        }
 
-    /**
-     * Take a claimed device out of service.
-     *
-     * @throws IoTDeviceNotFoundException if no device exists with that id.
-     */
-    public void handle(DeactivateIoTDeviceCommand command) {
-        IoTDevice device = this.require(command.deviceId());
-        device.deactivate(ProfileId.of(command.requesterId()));
         this.persist(device);
     }
 
