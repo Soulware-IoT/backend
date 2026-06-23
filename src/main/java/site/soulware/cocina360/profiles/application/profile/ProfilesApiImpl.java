@@ -47,6 +47,6 @@ class ProfilesApiImpl implements ProfilesApi {
                         result.preferredName(),
                         result.email(),
                         result.avatarUrl()))
-                .collect(Collectors.toMap(ProfileSummary::profileId, Function.identity()));
+                .collect(Collectors.toMap(ProfileSummary::id, Function.identity()));
     }
 }

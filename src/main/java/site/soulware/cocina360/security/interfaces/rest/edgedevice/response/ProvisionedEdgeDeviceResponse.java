@@ -9,7 +9,7 @@ import site.soulware.cocina360.security.application.edgedevice.ProvisionedEdgeDe
  * apiKey so they can be written into the edge's configuration — the single point at which
  * the apiKey is exposed.
  */
-public record ProvisionedEdgeDeviceResponse(UUID edgeDeviceId, String code, String apiKey) {
+public record ProvisionedEdgeDeviceResponse(UUID id, String code, String apiKey) {
 
     public static ProvisionedEdgeDeviceResponse from(ProvisionedEdgeDeviceResult result) {
         return new ProvisionedEdgeDeviceResponse(result.edgeDeviceId(), result.code(), result.apiKey());

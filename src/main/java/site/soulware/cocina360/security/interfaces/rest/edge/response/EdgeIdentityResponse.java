@@ -10,7 +10,7 @@ import java.util.UUID;
  * it belongs to. The apiKey is intentionally omitted (the caller already holds it).
  */
 public record EdgeIdentityResponse(
-    UUID edgeDeviceId,
+    UUID id,
     UUID organizationId,
     String name,
     EdgeDeviceStatus status

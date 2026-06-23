@@ -9,7 +9,7 @@ import site.soulware.cocina360.security.application.iotdevice.ProvisionedIoTDevi
  * apiKey so they can be burned into the firmware — the single point at which the
  * apiKey is exposed.
  */
-public record ProvisionedDeviceResponse(UUID deviceId, String code, String apiKey) {
+public record ProvisionedDeviceResponse(UUID id, String code, String apiKey) {
 
     public static ProvisionedDeviceResponse from(ProvisionedIoTDeviceResult result) {
         return new ProvisionedDeviceResponse(result.deviceId(), result.code(), result.apiKey());
