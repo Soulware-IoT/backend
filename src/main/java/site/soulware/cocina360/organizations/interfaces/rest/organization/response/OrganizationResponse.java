@@ -12,10 +12,7 @@ public record OrganizationResponse(
         String imageUrl,
         Address address,
         UUID ownedBy,
-        UUID createdBy,
-        Instant createdAt,
-        UUID updatedBy,
-        Instant updatedAt
+        Instant createdAt
 ) {
     public record Address(
             String lineOne,
@@ -30,7 +27,6 @@ public record OrganizationResponse(
     public static OrganizationResponse from(OrganizationResult result) {
         return new OrganizationResponse(result.id(), result.name(), result.imageUrl(),
                 Address.from(result.address()),
-                result.ownedBy(), result.createdBy(), result.createdAt(),
-                result.updatedBy(), result.updatedAt());
+                result.ownedBy(), result.createdAt());
     }
 }
