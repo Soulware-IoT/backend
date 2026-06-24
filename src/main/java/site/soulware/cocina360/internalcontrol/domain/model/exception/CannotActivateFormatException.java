@@ -5,6 +5,6 @@ import site.soulware.cocina360.internalcontrol.domain.model.valueobject.ControlF
 public class CannotActivateFormatException extends InvalidFormatTransitionException {
 
     public CannotActivateFormatException(ControlFormatStatus currentStatus) {
-        super("error.control.format.cannot_activate", currentStatus.label());
+        super("error.control.format.cannot_activate", currentStatus);
     }
 }

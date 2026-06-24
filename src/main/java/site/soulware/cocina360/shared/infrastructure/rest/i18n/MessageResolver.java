@@ -4,6 +4,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Component;
 import site.soulware.cocina360.shared.domain.model.exception.DomainException;
+import site.soulware.cocina360.shared.domain.model.valueobject.TranslatableEnum;
 
 /**
  * Resolves i18n messages against the application {@code MessageSource} using the locale of
@@ -26,6 +27,21 @@ public class MessageResolver {
 
     /** Resolves an arbitrary message key with optional positional arguments. */
     public String get(String key, Object... args) {
-        return this.messageSource.getMessage(key, args, LocaleContextHolder.getLocale());
+        return this.messageSource.getMessage(key, this.localize(args), LocaleContextHolder.getLocale());
+    }
+
+    /**
+     * Replaces any {@link TranslatableEnum} argument with its locale-resolved label, so enum
+     * values surface translated (not their internal name) inside the formatted message.
+     */
+    private Object[] localize(Object[] args) {
+        if (args == null) {
+            return null;
+        }
+        Object[] localized = new Object[args.length];
+        for (int i = 0; i < args.length; i++) {
+            localized[i] = args[i] instanceof TranslatableEnum e ? this.get(e.messageKey()) : args[i];
+        }
+        return localized;
     }
 }
