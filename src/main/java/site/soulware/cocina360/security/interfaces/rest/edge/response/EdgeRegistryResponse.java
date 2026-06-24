@@ -24,11 +24,12 @@ public record EdgeRegistryResponse(
     ) {}
 
     public record Thresholds(
-        int warnTemperatureC,
-        int critTemperatureC,
-        double warnGasPpm,
-        double critGasPpm
-    ) {}
+        Temperature temperature,
+        Gas gas
+    ) {
+        public record Temperature(int warn, int crit) {}
+        public record Gas(double warn, double crit) {}
+    }
 
     public static EdgeRegistryResponse of(UUID organizationId, List<IoTDeviceRegistryEntry> entries) {
         List<Device> devices = entries.stream()
@@ -38,10 +39,8 @@ public record EdgeRegistryResponse(
                         entry.name(),
                         entry.apiKey(),
                         new Thresholds(
-                                entry.warnTemperatureC(),
-                                entry.critTemperatureC(),
-                                entry.warnGasPpm(),
-                                entry.critGasPpm())))
+                                new Thresholds.Temperature(entry.warnTemperatureC(), entry.critTemperatureC()),
+                                new Thresholds.Gas(entry.warnGasPpm(), entry.critGasPpm()))))
                 .toList();
         return new EdgeRegistryResponse(organizationId, devices);
     }
