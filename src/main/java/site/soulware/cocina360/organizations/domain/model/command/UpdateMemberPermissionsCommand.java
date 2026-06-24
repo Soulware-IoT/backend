@@ -8,6 +8,6 @@ public record UpdateMemberPermissionsCommand(
         UUID organizationId,
         UUID memberId,
         PermissionLevel security,
-        PermissionLevel iot,
+        PermissionLevel organizations,
         PermissionLevel internalControl
 ) {}

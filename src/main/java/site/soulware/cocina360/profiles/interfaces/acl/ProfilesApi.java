@@ -32,6 +32,13 @@ public interface ProfilesApi {
     ProfileId requireProfileIdByEmail(String email);
 
     /**
+     * Verifies a profile with the given id exists and returns its email.
+     *
+     * @throws site.soulware.cocina360.profiles.domain.model.exception.ProfileNotFoundException if absent
+     */
+    String requireEmailByProfileId(UUID profileId);
+
+    /**
      * Resolves the published {@link ProfileSummary} view for each existing profile id, keyed by id.
      * Unlike the {@code require*} guards, missing ids are simply absent from the result map (no
      * exception) — this is a projection for embedding profiles into read models, not a guard.

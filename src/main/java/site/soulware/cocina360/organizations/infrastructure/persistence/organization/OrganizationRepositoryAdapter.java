@@ -2,7 +2,10 @@ package site.soulware.cocina360.organizations.infrastructure.persistence.organiz
 
 import org.springframework.stereotype.Repository;
 import site.soulware.cocina360.organizations.domain.model.aggregate.Organization;
+import site.soulware.cocina360.organizations.domain.model.valueobject.OrganizationAddress;
 import site.soulware.cocina360.organizations.domain.repository.OrganizationRepository;
+import site.soulware.cocina360.organizations.infrastructure.persistence.organization.jpa.OrganizationJpaEntity;
+import site.soulware.cocina360.organizations.infrastructure.persistence.organization.jpa.OrganizationJpaRepository;
 import site.soulware.cocina360.shared.domain.model.valueobject.OrganizationId;
 import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
 
@@ -42,9 +45,9 @@ public class OrganizationRepositoryAdapter implements OrganizationRepository {
                 org.getOwnedBy().value(),
                 org.getName(),
                 org.getImageUrl(),
-                org.getAddressLineOne(),
-                org.getAddressLineTwo(),
-                org.getAddressReference(),
+                org.getAddress().lineOne(),
+                org.getAddress().lineTwo(),
+                org.getAddress().reference(),
                 org.getCreatedAt(),
                 org.getUpdatedAt()
         );
@@ -55,9 +58,7 @@ public class OrganizationRepositoryAdapter implements OrganizationRepository {
                 OrganizationId.of(entity.getId()),
                 entity.getName(),
                 entity.getImageUrl(),
-                entity.getAddressLineOne(),
-                entity.getAddressLineTwo(),
-                entity.getAddressReference(),
+                new OrganizationAddress(entity.getAddressLineOne(), entity.getAddressLineTwo(), entity.getAddressReference()),
                 entity.getCreatedAt(),
                 ProfileId.of(entity.getCreatedBy()),
                 entity.getUpdatedAt(),

@@ -38,8 +38,7 @@ public class OrganizationCommandService {
         ProfileId requesterId = ProfileId.of(command.requesterId());
 
         Organization org = Organization.create(id, command.name(), command.imageUrl(),
-                command.addressLineOne(), command.addressLineTwo(), command.addressReference(),
-                requesterId, requesterId);
+                command.address(), requesterId, requesterId);
 
         this.organizationRepository.save(org);
         org.pullDomainEvents().forEach(this.eventPublisher::publishEvent);
@@ -54,8 +53,7 @@ public class OrganizationCommandService {
     public void handle(UpdateOrganizationCommand command) {
         Organization org = this.findOrThrow(OrganizationId.of(command.organizationId()));
 
-        org.update(command.name(), command.imageUrl(), command.addressLineOne(),
-                command.addressLineTwo(), command.addressReference(),
+        org.update(command.name(), command.imageUrl(), command.address(),
                 ProfileId.of(command.requesterId()));
 
         this.organizationRepository.save(org);
@@ -64,6 +62,7 @@ public class OrganizationCommandService {
 
     public void handle(DeleteOrganizationCommand command) {
         Organization org = this.findOrThrow(OrganizationId.of(command.organizationId()));
+        org.requireOwner(ProfileId.of(command.requesterId()));
         this.organizationRepository.delete(org);
     }
 

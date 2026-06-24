@@ -4,6 +4,7 @@ import site.soulware.cocina360.organizations.domain.model.event.InvitationAccept
 import site.soulware.cocina360.organizations.domain.model.event.InvitationDeclined;
 import site.soulware.cocina360.organizations.domain.model.event.InvitationSent;
 import site.soulware.cocina360.organizations.domain.model.exception.InvitationAlreadyRespondedException;
+import site.soulware.cocina360.organizations.domain.model.exception.NotInvitedProfileException;
 import site.soulware.cocina360.organizations.domain.model.valueobject.InvitationId;
 import site.soulware.cocina360.organizations.domain.model.valueobject.InvitationStatus;
 import site.soulware.cocina360.shared.domain.model.aggregate.AggregateRoot;
@@ -76,6 +77,12 @@ public class Invitation extends AggregateRoot<InvitationId> {
         this.status = InvitationStatus.DECLINED;
         this.respondedAt = Instant.now();
         this.registerEvent(new InvitationDeclined(this.id.value(), this.organizationId.value(), this.respondedAt));
+    }
+
+    public void requireInvitedEmail(String requesterEmail) {
+        if (!this.invitedEmail.equals(requesterEmail)) {
+            throw new NotInvitedProfileException();
+        }
     }
 
     private void requirePending() {

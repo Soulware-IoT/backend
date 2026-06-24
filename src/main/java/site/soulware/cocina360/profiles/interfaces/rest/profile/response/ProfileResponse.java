@@ -6,7 +6,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record ProfileResponse(
-        UUID profileId,
+        UUID id,
         String fullName,
         String preferredName,
         String email,

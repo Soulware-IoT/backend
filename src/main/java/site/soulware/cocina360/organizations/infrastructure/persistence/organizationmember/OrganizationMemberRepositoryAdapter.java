@@ -6,6 +6,8 @@ import site.soulware.cocina360.organizations.domain.model.valueobject.Invitation
 import site.soulware.cocina360.organizations.domain.model.valueobject.OrganizationMemberId;
 import site.soulware.cocina360.organizations.domain.model.valueobject.OrganizationMemberPermissions;
 import site.soulware.cocina360.organizations.domain.repository.OrganizationMemberRepository;
+import site.soulware.cocina360.organizations.infrastructure.persistence.organizationmember.jpa.OrganizationMemberJpaEntity;
+import site.soulware.cocina360.organizations.infrastructure.persistence.organizationmember.jpa.OrganizationMemberJpaRepository;
 import site.soulware.cocina360.shared.domain.model.valueobject.OrganizationId;
 import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
 
@@ -45,6 +47,14 @@ public class OrganizationMemberRepositoryAdapter implements OrganizationMemberRe
                 .toList();
     }
 
+    @Override
+    public List<OrganizationMember> findAllByProfileId(ProfileId profileId) {
+        return this.jpaRepository.findAllByProfileId(profileId.value())
+                .stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
     private OrganizationMemberJpaEntity toJpaEntity(OrganizationMember member) {
         OrganizationMemberPermissions perms = member.getPermissions();
         return new OrganizationMemberJpaEntity(
@@ -54,7 +64,7 @@ public class OrganizationMemberRepositoryAdapter implements OrganizationMemberRe
                 member.getInvitationId() != null ? member.getInvitationId().value() : null,
                 member.getJoinedAt(),
                 perms.security(),
-                perms.iot(),
+                perms.organizations(),
                 perms.internalControl()
         );
     }
@@ -62,7 +72,7 @@ public class OrganizationMemberRepositoryAdapter implements OrganizationMemberRe
     private OrganizationMember toDomain(OrganizationMemberJpaEntity entity) {
         OrganizationMemberPermissions permissions = new OrganizationMemberPermissions(
                 entity.getSecurity(),
-                entity.getIot(),
+                entity.getOrganizations(),
                 entity.getInternalControl()
         );
         return OrganizationMember.rehydrate(

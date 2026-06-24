@@ -8,11 +8,13 @@ import site.soulware.cocina360.organizations.application.organization.Organizati
 import site.soulware.cocina360.organizations.application.organization.OrganizationQueryService;
 import site.soulware.cocina360.organizations.domain.model.command.DeleteOrganizationCommand;
 import site.soulware.cocina360.organizations.domain.model.query.GetOrganizationQuery;
+import site.soulware.cocina360.organizations.domain.model.query.ListOrganizationsByProfileQuery;
 import site.soulware.cocina360.organizations.interfaces.rest.organization.request.CreateOrganizationRequest;
 import site.soulware.cocina360.organizations.interfaces.rest.organization.request.UpdateOrganizationRequest;
 import site.soulware.cocina360.organizations.interfaces.rest.organization.response.OrganizationResponse;
 import site.soulware.cocina360.profiles.interfaces.acl.ProfilesApi;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -45,6 +47,16 @@ public class OrganizationController {
                 .body(OrganizationResponse.from(this.queryService.handle(new GetOrganizationQuery(organizationId.value()))));
     }
 
+    @GetMapping(params = "profileId")
+    public ResponseEntity<List<OrganizationResponse>> listByProfile(@RequestParam UUID profileId) {
+        this.profilesApi.requireProfileId(profileId);
+        List<OrganizationResponse> organizations = this.queryService
+                .handle(new ListOrganizationsByProfileQuery(profileId)).stream()
+                .map(OrganizationResponse::from)
+                .toList();
+        return ResponseEntity.ok(organizations);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<OrganizationResponse> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(
@@ -65,8 +77,12 @@ public class OrganizationController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        this.commandService.handle(new DeleteOrganizationCommand(id));
+    public ResponseEntity<Void> delete(
+        @PathVariable UUID id,
+        @RequestHeader("X-Requester-Id") UUID requesterId
+    ) {
+        this.profilesApi.requireProfileId(requesterId);
+        this.commandService.handle(new DeleteOrganizationCommand(id, requesterId));
         return ResponseEntity.noContent().build();
     }
 }
