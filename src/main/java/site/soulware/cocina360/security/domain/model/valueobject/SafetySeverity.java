@@ -1,7 +1,5 @@
 package site.soulware.cocina360.security.domain.model.valueobject;
 
-import com.fasterxml.jackson.annotation.JsonValue;
-
 /**
  * The hierarchical safety level a reading represents, mirroring the device's
  * traffic-light logic:
@@ -12,18 +10,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * </ul>
  */
 public enum SafetySeverity {
-    SAFE("safe"),
-    WARNING("warning"),
-    CRITICAL("critical");
-
-    private final String label;
-
-    SafetySeverity(String label) {
-        this.label = label;
-    }
-
-    @JsonValue
-    public String label() {
-        return this.label;
-    }
+    SAFE,
+    WARNING,
+    CRITICAL
 }
