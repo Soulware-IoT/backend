@@ -174,6 +174,21 @@ The same robustness rule applies to references **within** a single bounded conte
 
 In short: **cross-context references are guarded via the owning module's facade; same-context references are guarded via the context's own query service.** Both reuse existing domain exceptions instead of reimplementing not-found handling.
 
+### REST Verb Conventions: state transitions vs. partial updates
+
+State changes are exposed one of two ways, chosen by the **shape of the change in the domain** — not by author preference. The two existing controllers are both correct because they model different shapes:
+
+| Shape | Verb / route | When |
+|---|---|---|
+| **Guarded state-machine transition** | `POST /{resource}/{id}/{action}` | The status field has a transition graph (illegal transitions are rejected) **and** each transition is a distinct domain operation that emits its own event. The action verb *is* the operation; the client triggers it, it cannot freely assign the target state. |
+| **Partial attribute update** | `PATCH /{resource}/{id}` | Status is a plain settable toggle (e.g. `ACTIVE`/`INACTIVE`) alongside other editable attributes (name, config). The request merges whichever fields are present; omitted fields are left unchanged. |
+
+Examples in the codebase:
+- **`POST` + action** — `InvitationController` (`/invitations/{id}/accept`, `/decline`): each transition is its own command with side effects (accepting creates a membership). `ControlFormatController` follows the same idiom for its `DRAFT → ACTIVE → SUSPENDED/CEASED` lifecycle (`ControlFormatStatus.canTransitionTo` guards transitions; each emits a distinct event).
+- **`PATCH`** — `IoTDeviceController` (`PATCH /iot-devices/{id}`): activation is a flat toggle merged with `name` and `thresholds` in one partial update.
+
+Do not force the two idioms to converge — a guarded transition modelled as a `PATCH {status}` would have to reject most field combinations, and a multi-field toggle modelled as `POST /action` fragments a single edit into several calls. Pick by the rule above. Each action endpoint still follows the standard flow (verify existence → command service → query service read of the updated state).
+
 ### Exception Conventions
 
 - All domain exceptions extend `DomainException` and pass a **message key** (not a hardcoded string) to the super constructor, e.g. `super("error.profile.not_found_by_id", id)`.
@@ -254,7 +269,7 @@ public static ControlFormat rehydrate(
 
 | Variable | Value format |
 |---|---|
-| `DB_URL` | `jdbc:postgresql://<pooler-host>:5432/postgres?sslmode=require&prepareThreshold=0` |
+| `DB_URL` | `jdbc:postgresql://<pooler-host>:6543/postgres?sslmode=require&prepareThreshold=0` |
 | `DB_USERNAME` | `postgres.<project-ref>` (pooler format) |
 | `DB_PASSWORD` | Supabase DB password |
 | `MONGODB_URI` | `mongodb://<host>:27017/cocina360` (telemetry `Reading` store) |

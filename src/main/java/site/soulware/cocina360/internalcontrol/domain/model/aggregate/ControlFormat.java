@@ -6,6 +6,10 @@ import site.soulware.cocina360.internalcontrol.domain.model.event.ControlFormatC
 import site.soulware.cocina360.internalcontrol.domain.model.event.ControlFormatResumed;
 import site.soulware.cocina360.internalcontrol.domain.model.event.ControlFormatSuspended;
 import site.soulware.cocina360.internalcontrol.domain.model.entity.FormatField;
+import site.soulware.cocina360.internalcontrol.domain.model.exception.CannotActivateFormatException;
+import site.soulware.cocina360.internalcontrol.domain.model.exception.CannotCeaseFormatException;
+import site.soulware.cocina360.internalcontrol.domain.model.exception.CannotResumeFormatException;
+import site.soulware.cocina360.internalcontrol.domain.model.exception.CannotSuspendFormatException;
 import site.soulware.cocina360.internalcontrol.domain.model.exception.FormatNotEditableException;
 import site.soulware.cocina360.internalcontrol.domain.model.exception.InvalidFormatTransitionException;
 import site.soulware.cocina360.internalcontrol.domain.model.valueobject.ControlFormatId;
@@ -71,22 +75,40 @@ public class ControlFormat extends AggregateRoot<ControlFormatId> {
     }
 
     public void activate() {
-        this.transitionTo(ControlFormatStatus.ACTIVE);
+        try {
+            this.requireSource(ControlFormatStatus.DRAFT);
+            this.transitionTo(ControlFormatStatus.ACTIVE);
+        } catch (InvalidFormatTransitionException e) {
+            throw new CannotActivateFormatException(this.status);
+        }
         this.registerEvent(new ControlFormatActivated(this.id.value(), this.updatedAt));
     }
 
     public void suspend() {
-        this.transitionTo(ControlFormatStatus.SUSPENDED);
+        try {
+            this.transitionTo(ControlFormatStatus.SUSPENDED);
+        } catch (InvalidFormatTransitionException e) {
+            throw new CannotSuspendFormatException(this.status);
+        }
         this.registerEvent(new ControlFormatSuspended(this.id.value(), this.updatedAt));
     }
 
     public void resume() {
-        this.transitionTo(ControlFormatStatus.ACTIVE);
+        try {
+            this.requireSource(ControlFormatStatus.SUSPENDED);
+            this.transitionTo(ControlFormatStatus.ACTIVE);
+        } catch (InvalidFormatTransitionException e) {
+            throw new CannotResumeFormatException(this.status);
+        }
         this.registerEvent(new ControlFormatResumed(this.id.value(), this.updatedAt));
     }
 
     public void cease() {
-        this.transitionTo(ControlFormatStatus.CEASED);
+        try {
+            this.transitionTo(ControlFormatStatus.CEASED);
+        } catch (InvalidFormatTransitionException e) {
+            throw new CannotCeaseFormatException(this.status);
+        }
         this.registerEvent(new ControlFormatCeased(this.id.value(), this.updatedAt));
     }
 
@@ -120,10 +142,22 @@ public class ControlFormat extends AggregateRoot<ControlFormatId> {
 
     private void transitionTo(ControlFormatStatus target) {
         if (!this.status.canTransitionTo(target)) {
-            throw new InvalidFormatTransitionException(this.status, target);
+            throw new InvalidFormatTransitionException();
         }
         this.status = target;
         this.touch();
+    }
+
+    /**
+     * Guards a transition whose target alone is ambiguous (e.g. {@code ACTIVE} is reachable
+     * from both {@code DRAFT} via activate and {@code SUSPENDED} via resume): pins the
+     * required source state so each operation only applies from where it semantically should.
+     * Throws the base signal; the calling operation rethrows its specific subtype.
+     */
+    private void requireSource(ControlFormatStatus expected) {
+        if (this.status != expected) {
+            throw new InvalidFormatTransitionException();
+        }
     }
 
     private void requireEditable() {

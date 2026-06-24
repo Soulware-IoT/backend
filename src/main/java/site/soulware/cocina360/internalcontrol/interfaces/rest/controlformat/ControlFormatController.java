@@ -7,6 +7,10 @@ import org.springframework.web.bind.annotation.*;
 import site.soulware.cocina360.internalcontrol.application.controlformat.ControlFormatCommandService;
 import site.soulware.cocina360.internalcontrol.application.controlformat.ControlFormatQueryService;
 import site.soulware.cocina360.internalcontrol.application.controlprocess.ControlProcessQueryService;
+import site.soulware.cocina360.internalcontrol.domain.model.command.ActivateControlFormatCommand;
+import site.soulware.cocina360.internalcontrol.domain.model.command.CeaseControlFormatCommand;
+import site.soulware.cocina360.internalcontrol.domain.model.command.ResumeControlFormatCommand;
+import site.soulware.cocina360.internalcontrol.domain.model.command.SuspendControlFormatCommand;
 import site.soulware.cocina360.internalcontrol.domain.model.query.GetControlFormatQuery;
 import site.soulware.cocina360.internalcontrol.domain.model.query.GetControlFormatsByProcessQuery;
 import site.soulware.cocina360.internalcontrol.domain.model.query.GetControlProcessQuery;
@@ -59,6 +63,42 @@ public class ControlFormatController {
 
     @GetMapping("/formats/{id}")
     public ResponseEntity<ControlFormatResponse> getById(@PathVariable UUID id) {
+        return ResponseEntity.ok(
+                ControlFormatResponse.from(this.queryService.handle(new GetControlFormatQuery(id)))
+        );
+    }
+
+    @PostMapping("/formats/{id}/activate")
+    public ResponseEntity<ControlFormatResponse> activate(@PathVariable UUID id) {
+        this.queryService.handle(new GetControlFormatQuery(id));
+        this.commandService.handle(new ActivateControlFormatCommand(id));
+        return ResponseEntity.ok(
+                ControlFormatResponse.from(this.queryService.handle(new GetControlFormatQuery(id)))
+        );
+    }
+
+    @PostMapping("/formats/{id}/suspend")
+    public ResponseEntity<ControlFormatResponse> suspend(@PathVariable UUID id) {
+        this.queryService.handle(new GetControlFormatQuery(id));
+        this.commandService.handle(new SuspendControlFormatCommand(id));
+        return ResponseEntity.ok(
+                ControlFormatResponse.from(this.queryService.handle(new GetControlFormatQuery(id)))
+        );
+    }
+
+    @PostMapping("/formats/{id}/resume")
+    public ResponseEntity<ControlFormatResponse> resume(@PathVariable UUID id) {
+        this.queryService.handle(new GetControlFormatQuery(id));
+        this.commandService.handle(new ResumeControlFormatCommand(id));
+        return ResponseEntity.ok(
+                ControlFormatResponse.from(this.queryService.handle(new GetControlFormatQuery(id)))
+        );
+    }
+
+    @PostMapping("/formats/{id}/cease")
+    public ResponseEntity<ControlFormatResponse> cease(@PathVariable UUID id) {
+        this.queryService.handle(new GetControlFormatQuery(id));
+        this.commandService.handle(new CeaseControlFormatCommand(id));
         return ResponseEntity.ok(
                 ControlFormatResponse.from(this.queryService.handle(new GetControlFormatQuery(id)))
         );
