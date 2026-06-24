@@ -12,7 +12,7 @@ import java.util.UUID;
  * null while the device is still {@code PROVISIONED} (unclaimed).
  */
 public record IoTDeviceResponse(
-    UUID deviceId,
+    UUID id,
     UUID organizationId,
     String code,
     String name,

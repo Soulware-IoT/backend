@@ -12,7 +12,7 @@ import java.util.UUID;
  *               organization's device registry and thresholds.
  */
 public record EdgeDeviceResponse(
-    UUID edgeDeviceId,
+    UUID id,
     UUID organizationId,
     String code,
     String name,

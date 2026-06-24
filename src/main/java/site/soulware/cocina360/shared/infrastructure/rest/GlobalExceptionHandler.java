@@ -59,15 +59,6 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handle(MethodArgumentNotValidException ex) {
-        // TEMP DEBUG — quitar después
-        Object target = ex.getBindingResult().getTarget();
-        System.out.println(">>> [VALID] target class = "
-                + (target == null ? "null" : target.getClass().getName())
-                + " loadedFrom=" + (target == null ? "?" :
-                        target.getClass().getProtectionDomain().getCodeSource().getLocation()));
-        System.out.println(">>> [VALID] fields = " + ex.getBindingResult().getFieldErrors().stream()
-                .map(fe -> fe.getField() + "=" + fe.getDefaultMessage()).collect(Collectors.joining(", ")));
-        new Throwable(">>> [VALID] punto del throw").printStackTrace();
         Locale locale = LocaleContextHolder.getLocale();
         String message = ex.getBindingResult().getFieldErrors().stream()
                 .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())

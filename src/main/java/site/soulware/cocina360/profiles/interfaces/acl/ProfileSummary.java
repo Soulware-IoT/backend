@@ -8,7 +8,7 @@ import java.util.UUID;
  * organization member listing) without importing the {@code profiles} module's internals.
  */
 public record ProfileSummary(
-        UUID profileId,
+        UUID id,
         String fullName,
         String preferredName,
         String email,

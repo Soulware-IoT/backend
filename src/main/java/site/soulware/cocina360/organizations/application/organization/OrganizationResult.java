@@ -1,6 +1,7 @@
 package site.soulware.cocina360.organizations.application.organization;
 
 import site.soulware.cocina360.organizations.domain.model.aggregate.Organization;
+import site.soulware.cocina360.organizations.domain.model.valueobject.OrganizationAddress;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -9,9 +10,7 @@ public record OrganizationResult(
         UUID id,
         String name,
         String imageUrl,
-        String addressLineOne,
-        String addressLineTwo,
-        String addressReference,
+        OrganizationAddress address,
         UUID ownedBy,
         UUID createdBy,
         Instant createdAt,
@@ -23,9 +22,7 @@ public record OrganizationResult(
                 org.getId().value(),
                 org.getName(),
                 org.getImageUrl(),
-                org.getAddressLineOne(),
-                org.getAddressLineTwo(),
-                org.getAddressReference(),
+                org.getAddress(),
                 org.getOwnedBy().value(),
                 org.getCreatedBy().value(),
                 org.getCreatedAt(),

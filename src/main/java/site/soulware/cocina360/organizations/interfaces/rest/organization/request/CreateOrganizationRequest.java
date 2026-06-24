@@ -3,6 +3,7 @@ package site.soulware.cocina360.organizations.interfaces.rest.organization.reque
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import site.soulware.cocina360.organizations.domain.model.command.CreateOrganizationCommand;
+import site.soulware.cocina360.organizations.domain.model.valueobject.OrganizationAddress;
 
 import java.util.UUID;
 
@@ -15,7 +16,7 @@ public record CreateOrganizationRequest(
 ) {
     public CreateOrganizationCommand toCommand(UUID requesterId) {
         return new CreateOrganizationCommand(this.name, this.imageUrl,
-                this.addressLineOne, this.addressLineTwo, this.addressReference,
+                new OrganizationAddress(this.addressLineOne, this.addressLineTwo, this.addressReference),
                 requesterId);
     }
 }
