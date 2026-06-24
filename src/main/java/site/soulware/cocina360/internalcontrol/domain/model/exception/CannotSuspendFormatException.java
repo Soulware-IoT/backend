@@ -5,6 +5,6 @@ import site.soulware.cocina360.internalcontrol.domain.model.valueobject.ControlF
 public class CannotSuspendFormatException extends InvalidFormatTransitionException {
 
     public CannotSuspendFormatException(ControlFormatStatus currentStatus) {
-        super("error.control.format.cannot_suspend", currentStatus);
+        super("error.control.format.cannot_suspend", currentStatus.label());
     }
 }

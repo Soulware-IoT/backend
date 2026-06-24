@@ -5,6 +5,6 @@ import site.soulware.cocina360.internalcontrol.domain.model.valueobject.ControlF
 public class CannotCeaseFormatException extends InvalidFormatTransitionException {
 
     public CannotCeaseFormatException(ControlFormatStatus currentStatus) {
-        super("error.control.format.cannot_cease", currentStatus);
+        super("error.control.format.cannot_cease", currentStatus.label());
     }
 }
