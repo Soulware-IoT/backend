@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public record InvitationResponse(
         UUID id,
-        String invitedEmail,
+        String email,
         UUID organizationId,
         ProfileSummary invitedBy,
         Instant invitedAt,
