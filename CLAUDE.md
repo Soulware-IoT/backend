@@ -107,8 +107,10 @@ Base classes that all modules reuse, located at `site.soulware.cocina360.shared`
 | `shared.domain.model.exception.EntityNotFoundException` | Thrown when an aggregate cannot be found; maps to HTTP 404 |
 | `shared.domain.model.exception.BusinessRuleViolationException` | Thrown when a named business rule is violated; maps to HTTP 422 |
 | `shared.domain.repository.DomainRepository<A, ID>` | Marker interface for domain repository contracts |
-| `shared.infrastructure.rest.GlobalExceptionHandler` | `@RestControllerAdvice` — maps all exceptions to `ErrorResponse`; resolves messages via `MessageSource` |
-| `shared.infrastructure.rest.ErrorResponse` | Standard error envelope: `{ status, error, message, timestamp }` |
+| `shared.infrastructure.rest.DomainExceptionHandler` | `@RestControllerAdvice` (highest precedence) — maps `DomainException`s (404/422/401/400) to `ErrorResponse` |
+| `shared.infrastructure.rest.WebExceptionHandler` | `@RestControllerAdvice` (lowest precedence) — maps framework/Java exceptions (validation, type mismatch) and the `Exception` catch-all (500) |
+| `shared.infrastructure.rest.i18n.MessageResolver` | `@Component` shared by both handlers — resolves message keys/args via `MessageSource` + request locale |
+| `shared.infrastructure.rest.response.ErrorResponse` | Standard error envelope: `{ status, error, message, timestamp }` |
 | `shared.infrastructure.config.ValidationConfig` | Wires `LocalValidatorFactoryBean` to use the application `MessageSource` |
 
 ### Cross-Context ID References
@@ -126,7 +128,7 @@ To verify those dependencies **without breaking module boundaries**, the owning 
 Rules:
 - The facade lives in the owning module's **`interfaces/acl`** package (e.g. `profiles.interfaces.acl.ProfilesApi`). That package's `package-info.java` carries `@org.springframework.modulith.NamedInterface("acl")`, which exposes it as consumable API (sub-packages are otherwise module-internal; only the root package is exposed by default). Both the port and its `@Service` adapter (e.g. `ProfilesApiImpl`) live in this package — the adapter depends on the module's `application` query service (the normal `interfaces → application` direction).
 - The facade method signatures use **only shared types** (`shared.domain.model.valueobject.*`) or primitives — never the other module's internal aggregates, `Result` records, or query/command records. A method returns, e.g., a `ProfileId`, not a `Profile` or `ProfileResult`.
-- **Existence is enforced by reusing the existing domain exception.** The adapter delegates to the query service, which already throws the canonical `*NotFoundException` (e.g. `ProfileNotFoundException.byEmail(...)`). That exception propagates unchanged up to `GlobalExceptionHandler`, so consumers never reimplement "not found" logic or invent new message keys.
+- **Existence is enforced by reusing the existing domain exception.** The adapter delegates to the query service, which already throws the canonical `*NotFoundException` (e.g. `ProfileNotFoundException.byEmail(...)`). That exception propagates unchanged up to `DomainExceptionHandler`, so consumers never reimplement "not found" logic or invent new message keys.
 - The consumer calls the facade as a guard, then proceeds. Example: the invitation flow calls `profilesApi.requireProfileId(requesterId)` (throws `ProfileNotFoundException` if absent) and an `organizations`-internal `OrganizationQueryService` lookup for the organization, before creating the invitation.
 
 ```java
@@ -168,7 +170,7 @@ This keeps the embed in-process (one call, same DB) — eliminating a client rou
 
 The same robustness rule applies to references **within** a single bounded context. Before a controller dispatches a command that targets or references an existing aggregate/entity of its own context, it **verifies existence through the context's own query service** — the query service already throws the canonical `*NotFoundException` when the resource is absent.
 
-- The check is a `queryService.handle(GetXQuery)` call; its `*NotFoundException` propagates to `GlobalExceptionHandler`, so the endpoint returns a correct 404 without the controller writing any conditional/exception logic.
+- The check is a `queryService.handle(GetXQuery)` call; its `*NotFoundException` propagates to `DomainExceptionHandler`, so the endpoint returns a correct 404 without the controller writing any conditional/exception logic.
 - This fits the established CQRS flow (controller → command service → query service): the verifying query and the post-command read use the **same** query service, reusing the same exceptions and message keys.
 - The result: every endpoint that names a referenced resource is robust by construction — a missing aggregate/entity surfaces as the existing domain exception rather than a downstream constraint error or a `NullPointerException`.
 
@@ -193,7 +195,7 @@ Do not force the two idioms to converge — a guarded transition modelled as a `
 
 - All domain exceptions extend `DomainException` and pass a **message key** (not a hardcoded string) to the super constructor, e.g. `super("error.profile.not_found_by_id", id)`.
 - Each bounded context defines its own specific exception classes with the key burned in — application services never pass raw string keys.
-- `GlobalExceptionHandler` resolves the key via `MessageSource` + `LocaleContextHolder.getLocale()` to produce a translated message.
+- `DomainExceptionHandler` (via the shared `MessageResolver`) resolves the key via `MessageSource` + `LocaleContextHolder.getLocale()` to produce a translated message.
 
 ### i18n
 
