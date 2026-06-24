@@ -34,13 +34,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessRuleViolationException.class)
     public ResponseEntity<ErrorResponse> handle(BusinessRuleViolationException ex) {
-        Locale locale = LocaleContextHolder.getLocale();
-        String detail = this.messageSource.getMessage(ex.getMessageKey(), ex.getMessageArgs(), locale);
-        String message = this.messageSource.getMessage(
-                "error.business_rule.violated", new Object[]{detail}, locale);
         return ResponseEntity
                 .status(HttpStatus.UNPROCESSABLE_CONTENT)
-                .body(ErrorResponse.of(422, "Unprocessable Entity", message));
+                .body(ErrorResponse.of(422, "Unprocessable Entity", this.resolve(ex)));
     }
 
     @ExceptionHandler(UnauthorizedException.class)
