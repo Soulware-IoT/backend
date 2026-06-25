@@ -10,8 +10,12 @@ import site.soulware.cocina360.shared.domain.model.exception.BusinessRuleViolati
 import site.soulware.cocina360.shared.domain.model.exception.DomainException;
 import site.soulware.cocina360.shared.domain.model.exception.EntityNotFoundException;
 import site.soulware.cocina360.shared.domain.model.exception.UnauthorizedException;
+import site.soulware.cocina360.shared.domain.model.exception.ValidationException;
 import site.soulware.cocina360.shared.infrastructure.rest.i18n.MessageResolver;
 import site.soulware.cocina360.shared.infrastructure.rest.response.ErrorResponse;
+import site.soulware.cocina360.shared.infrastructure.rest.response.ValidationErrorResponse;
+
+import java.util.List;
 
 /**
  * Maps {@link DomainException}s to their HTTP responses. Runs at highest precedence so domain
@@ -40,6 +44,24 @@ public class DomainExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.UNPROCESSABLE_CONTENT)
                 .body(ErrorResponse.of(422, "Unprocessable Entity", this.messages.resolve(ex)));
+    }
+
+    /**
+     * Specialization of the 422 mapping for multi-field validation failures: resolves the summary
+     * message and each field's reason, returning a {@link ValidationErrorResponse} that carries the
+     * per-field detail. Being a more specific {@code @ExceptionHandler} than the
+     * {@link BusinessRuleViolationException} one above, Spring selects it for {@code ValidationException}.
+     */
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<ValidationErrorResponse> handle(ValidationException ex) {
+        List<ValidationErrorResponse.FieldError> violations = ex.getViolations().stream()
+                .map(violation -> new ValidationErrorResponse.FieldError(
+                        violation.fieldKey(),
+                        this.messages.get(violation.messageKey())))
+                .toList();
+        return ResponseEntity
+                .status(HttpStatus.UNPROCESSABLE_CONTENT)
+                .body(ValidationErrorResponse.of(this.messages.resolve(ex), violations));
     }
 
     @ExceptionHandler(UnauthorizedException.class)
