@@ -1,4 +1,4 @@
-package site.soulware.cocina360.internalcontrol.infrastructure.persistence.controlprocess;
+package site.soulware.cocina360.internalcontrol.infrastructure.persistence.controlprocess.jpa;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

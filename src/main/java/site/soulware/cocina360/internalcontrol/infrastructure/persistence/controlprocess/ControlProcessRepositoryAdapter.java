@@ -4,6 +4,8 @@ import org.springframework.stereotype.Repository;
 import site.soulware.cocina360.internalcontrol.domain.model.aggregate.ControlProcess;
 import site.soulware.cocina360.internalcontrol.domain.model.valueobject.ControlProcessId;
 import site.soulware.cocina360.internalcontrol.domain.repository.ControlProcessRepository;
+import site.soulware.cocina360.internalcontrol.infrastructure.persistence.controlprocess.jpa.ControlProcessJpaEntity;
+import site.soulware.cocina360.internalcontrol.infrastructure.persistence.controlprocess.jpa.ControlProcessJpaRepository;
 import site.soulware.cocina360.shared.domain.model.valueobject.OrganizationId;
 
 import java.util.List;

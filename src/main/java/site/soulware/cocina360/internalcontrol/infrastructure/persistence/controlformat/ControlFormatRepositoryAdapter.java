@@ -5,6 +5,8 @@ import site.soulware.cocina360.internalcontrol.domain.model.aggregate.ControlFor
 import site.soulware.cocina360.internalcontrol.domain.model.valueobject.ControlFormatId;
 import site.soulware.cocina360.internalcontrol.domain.model.valueobject.ControlProcessId;
 import site.soulware.cocina360.internalcontrol.domain.repository.ControlFormatRepository;
+import site.soulware.cocina360.internalcontrol.infrastructure.persistence.controlformat.jpa.ControlFormatJpaEntity;
+import site.soulware.cocina360.internalcontrol.infrastructure.persistence.controlformat.jpa.ControlFormatJpaRepository;
 
 import java.util.List;
 import java.util.Optional;

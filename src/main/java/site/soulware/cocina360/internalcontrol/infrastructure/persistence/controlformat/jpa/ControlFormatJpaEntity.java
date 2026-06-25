@@ -1,4 +1,4 @@
-package site.soulware.cocina360.internalcontrol.infrastructure.persistence.controlformat;
+package site.soulware.cocina360.internalcontrol.infrastructure.persistence.controlformat.jpa;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
