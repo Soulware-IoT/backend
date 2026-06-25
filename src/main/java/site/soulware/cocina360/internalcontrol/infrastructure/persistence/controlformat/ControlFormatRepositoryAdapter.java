@@ -17,6 +17,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -41,18 +42,41 @@ public class ControlFormatRepositoryAdapter implements ControlFormatRepository {
     public ControlFormat save(ControlFormat aggregate) {
         ControlFormatJpaEntity saved = this.jpaRepository.save(this.toJpaEntity(aggregate));
 
-        // The aggregate owns its fields: replace the persisted set wholesale so add/update/remove
-        // all converge to one path. Flush the delete before re-inserting to honour the
-        // unique (format_id, key) constraint when a key is reused.
+        // Synchronize the persisted field rows to match the aggregate's field set by id: mutate the
+        // rows that remain (Hibernate dirty-checks → UPDATE), insert the new ones, delete the rows
+        // no longer present. Reconciling against the managed rows (instead of delete-all + reinsert
+        // with the same ids) avoids a merge issuing an UPDATE on a just-deleted row.
         UUID formatId = aggregate.getId().value();
-        this.fieldJpaRepository.deleteByFormatId(formatId);
-        this.fieldJpaRepository.flush();
-        List<ControlFormatFieldJpaEntity> fieldEntities = aggregate.getFields().stream()
-                .map(field -> this.toFieldEntity(formatId, field))
-                .toList();
-        this.fieldJpaRepository.saveAll(fieldEntities);
+        Map<UUID, ControlFormatFieldJpaEntity> existing = this.fieldJpaRepository.findAllByFormatId(formatId)
+                .stream()
+                .collect(Collectors.toMap(ControlFormatFieldJpaEntity::getId, e -> e));
+        Set<UUID> desiredIds = aggregate.getFields().stream()
+                .map(field -> field.getId().value())
+                .collect(Collectors.toSet());
 
-        return this.toDomain(saved, fieldEntities);
+        // Delete removed rows first and flush, so a key freed by a deletion is available before a
+        // new field re-uses it (slugged keys can collide with a just-removed field's key).
+        existing.values().stream()
+                .filter(row -> !desiredIds.contains(row.getId()))
+                .forEach(this.fieldJpaRepository::delete);
+        this.fieldJpaRepository.flush();
+
+        for (FormatField field : aggregate.getFields()) {
+            ControlFormatFieldJpaEntity row = existing.get(field.getId().value());
+            if (row == null) {
+                this.fieldJpaRepository.save(this.toFieldEntity(formatId, field));
+            } else {
+                row.update(
+                        field.getLabel(),
+                        field.getType(),
+                        field.isRequired(),
+                        field.getDisplayOrder(),
+                        this.validationRulesJsonMapper.toJson(field.getValidationRules())
+                );
+            }
+        }
+
+        return this.toDomain(saved, this.fieldJpaRepository.findAllByFormatId(formatId));
     }
 
     @Override

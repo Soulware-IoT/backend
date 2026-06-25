@@ -52,8 +52,9 @@ public class FormatField extends Entity<FormatFieldId> {
         return new FormatField(id, key, label, type, required, displayOrder, validationRules);
     }
 
-    public void update(String label, boolean required, int displayOrder, ValidationRules validationRules) {
+    public void update(String label, FieldType type, boolean required, int displayOrder, ValidationRules validationRules) {
         this.label = requireLabel(label);
+        this.type = Objects.requireNonNull(type, "type must not be null");
         this.required = required;
         this.displayOrder = displayOrder;
         this.validationRules = Objects.requireNonNull(validationRules, "validationRules must not be null");

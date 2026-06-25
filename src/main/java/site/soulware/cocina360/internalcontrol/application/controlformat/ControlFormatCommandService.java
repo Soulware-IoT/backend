@@ -5,18 +5,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import site.soulware.cocina360.internalcontrol.domain.model.aggregate.ControlFormat;
 import site.soulware.cocina360.internalcontrol.domain.model.command.ActivateControlFormatCommand;
-import site.soulware.cocina360.internalcontrol.domain.model.command.AddFormatFieldCommand;
 import site.soulware.cocina360.internalcontrol.domain.model.command.CeaseControlFormatCommand;
 import site.soulware.cocina360.internalcontrol.domain.model.command.CreateControlFormatCommand;
-import site.soulware.cocina360.internalcontrol.domain.model.command.RemoveFormatFieldCommand;
+import site.soulware.cocina360.internalcontrol.domain.model.command.ReplaceFormatFieldsCommand;
 import site.soulware.cocina360.internalcontrol.domain.model.command.ResumeControlFormatCommand;
 import site.soulware.cocina360.internalcontrol.domain.model.command.SuspendControlFormatCommand;
-import site.soulware.cocina360.internalcontrol.domain.model.command.UpdateFormatFieldCommand;
-import site.soulware.cocina360.internalcontrol.domain.model.entity.FormatField;
 import site.soulware.cocina360.internalcontrol.domain.model.exception.ControlFormatNotFoundException;
 import site.soulware.cocina360.internalcontrol.domain.model.valueobject.ControlFormatId;
 import site.soulware.cocina360.internalcontrol.domain.model.valueobject.ControlProcessId;
-import site.soulware.cocina360.internalcontrol.domain.model.valueobject.FormatFieldId;
 import site.soulware.cocina360.internalcontrol.domain.repository.ControlFormatRepository;
 
 @Service
@@ -70,35 +66,9 @@ public class ControlFormatCommandService {
         this.persist(format);
     }
 
-    public void handle(AddFormatFieldCommand command) {
+    public void handle(ReplaceFormatFieldsCommand command) {
         ControlFormat format = this.findOrThrow(ControlFormatId.of(command.formatId()));
-        format.addField(FormatField.create(
-                FormatFieldId.generate(),
-                command.key(),
-                command.label(),
-                command.type(),
-                command.required(),
-                command.displayOrder(),
-                command.validationRules()
-        ));
-        this.persist(format);
-    }
-
-    public void handle(UpdateFormatFieldCommand command) {
-        ControlFormat format = this.findOrThrow(ControlFormatId.of(command.formatId()));
-        format.updateField(
-                FormatFieldId.of(command.fieldId()),
-                command.label(),
-                command.required(),
-                command.displayOrder(),
-                command.validationRules()
-        );
-        this.persist(format);
-    }
-
-    public void handle(RemoveFormatFieldCommand command) {
-        ControlFormat format = this.findOrThrow(ControlFormatId.of(command.formatId()));
-        format.removeField(FormatFieldId.of(command.fieldId()));
+        format.replaceFields(command.fields());
         this.persist(format);
     }
 

@@ -10,22 +10,29 @@ import site.soulware.cocina360.internalcontrol.domain.model.exception.CannotActi
 import site.soulware.cocina360.internalcontrol.domain.model.exception.CannotCeaseFormatException;
 import site.soulware.cocina360.internalcontrol.domain.model.exception.CannotResumeFormatException;
 import site.soulware.cocina360.internalcontrol.domain.model.exception.CannotSuspendFormatException;
+import site.soulware.cocina360.internalcontrol.domain.model.exception.FormatFieldNotFoundException;
 import site.soulware.cocina360.internalcontrol.domain.model.exception.FormatNotEditableException;
 import site.soulware.cocina360.internalcontrol.domain.model.exception.InvalidFormatTransitionException;
 import site.soulware.cocina360.internalcontrol.domain.model.valueobject.ControlFormatId;
 import site.soulware.cocina360.internalcontrol.domain.model.valueobject.ControlFormatStatus;
 import site.soulware.cocina360.internalcontrol.domain.model.valueobject.ControlProcessId;
 import site.soulware.cocina360.internalcontrol.domain.model.valueobject.FieldType;
+import site.soulware.cocina360.internalcontrol.domain.model.valueobject.FormatFieldDraft;
 import site.soulware.cocina360.internalcontrol.domain.model.valueobject.FormatFieldId;
 import site.soulware.cocina360.internalcontrol.domain.model.valueobject.NumberKind;
 import site.soulware.cocina360.internalcontrol.domain.model.valueobject.ValidationRules;
 import site.soulware.cocina360.shared.domain.model.aggregate.AggregateRoot;
 
+import java.text.Normalizer;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 public class ControlFormat extends AggregateRoot<ControlFormatId> {
 
@@ -136,31 +143,84 @@ public class ControlFormat extends AggregateRoot<ControlFormatId> {
         this.registerEvent(new ControlFormatCeased(this.id.value(), this.updatedAt));
     }
 
-    public void addField(FormatField field) {
+    /**
+     * Replaces the whole field collection with the desired state ({@code PUT} semantics).
+     * Reconciles against the currently held fields: an {@link FormatFieldDraft.Existing} draft
+     * updates the matching field in place (throwing {@link FormatFieldNotFoundException} if its id
+     * is unknown to this format), a {@link FormatFieldDraft.New} draft is created, and any current
+     * field absent from the drafts is dropped. Editable only while DRAFT; keys must be unique
+     * across the resulting set.
+     */
+    public void replaceFields(List<FormatFieldDraft> drafts) {
+        this.requireEditable();
+        Objects.requireNonNull(drafts, "drafts must not be null");
+
+        Map<FormatFieldId, FormatField> current = new HashMap<>();
+        for (FormatField field : this.fields) {
+            current.put(field.getId(), field);
+        }
+
+        // Reserve the (frozen) keys of every surviving field first, so a newly slugged key never
+        // collides with an existing one regardless of ordering. New keys are then derived unique.
+        Set<String> usedKeys = new HashSet<>();
+        for (FormatFieldDraft draft : drafts) {
+            if (draft instanceof FormatFieldDraft.Existing e) {
+                usedKeys.add(this.requireField(current, e.id()).getKey());
+            }
+        }
+
+        List<FormatField> result = new ArrayList<>(drafts.size());
+        for (FormatFieldDraft draft : drafts) {
+            switch (draft) {
+                case FormatFieldDraft.New n -> {
+                    String key = uniqueKey(slugify(n.label()), usedKeys);
+                    usedKeys.add(key);
+                    result.add(FormatField.create(FormatFieldId.generate(), key, n.label(), n.type(),
+                            n.required(), n.displayOrder(), n.validationRules()));
+                }
+                case FormatFieldDraft.Existing e -> {
+                    FormatField existing = this.requireField(current, e.id());
+                    existing.update(e.label(), e.type(), e.required(), e.displayOrder(), e.validationRules());
+                    result.add(existing);
+                }
+            }
+        }
+
+        this.fields.clear();
+        this.fields.addAll(result);
+        this.touch();
+    }
+
+    private FormatField requireField(Map<FormatFieldId, FormatField> current, FormatFieldId id) {
+        FormatField existing = current.get(id);
+        if (existing == null) {
+            throw FormatFieldNotFoundException.byId(id.value());
+        }
+        return existing;
+    }
+
+    /** Derives a stable, readable field key from its label: ASCII-folded, lowercased, non-alphanumeric runs collapsed to '_'. */
+    private static String slugify(String label) {
+        String ascii = Normalizer.normalize(label, Normalizer.Form.NFD).replaceAll("\\p{M}+", "");
+        String slug = ascii.toLowerCase().replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "");
+        return slug.isBlank() ? "field" : slug;
+    }
+
+    private static String uniqueKey(String base, Set<String> used) {
+        if (!used.contains(base)) {
+            return base;
+        }
+        int suffix = 2;
+        while (used.contains(base + "_" + suffix)) {
+            suffix++;
+        }
+        return base + "_" + suffix;
+    }
+
+    private void addField(FormatField field) {
         this.requireEditable();
         Objects.requireNonNull(field, "field must not be null");
         this.fields.add(field);
-        this.touch();
-    }
-
-    public void removeField(FormatFieldId fieldId) {
-        this.requireEditable();
-        this.fields.removeIf(f -> f.getId().equals(fieldId));
-        this.touch();
-    }
-
-    public void updateField(
-        FormatFieldId fieldId,
-        String label,
-        boolean required,
-        int displayOrder,
-        ValidationRules validationRules
-    ) {
-        this.requireEditable();
-        this.fields.stream()
-                .filter(f -> f.getId().equals(fieldId))
-                .findFirst()
-                .ifPresent(f -> f.update(label, required, displayOrder, validationRules));
         this.touch();
     }
 

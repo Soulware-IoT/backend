@@ -26,7 +26,7 @@ public class ControlFormatFieldJpaEntity {
     @Column(name = "label", nullable = false)
     private String label;
 
-    @Column(name = "type", nullable = false, updatable = false)
+    @Column(name = "type", nullable = false)
     @ColumnTransformer(write = "?::field_type")
     private FieldType type;
 
@@ -55,6 +55,14 @@ public class ControlFormatFieldJpaEntity {
         this.id = id;
         this.formatId = formatId;
         this.key = key;
+        this.label = label;
+        this.type = type;
+        this.required = required;
+        this.displayOrder = displayOrder;
+        this.validationRules = validationRules;
+    }
+
+    public void update(String label, FieldType type, boolean required, int displayOrder, String validationRules) {
         this.label = label;
         this.type = type;
         this.required = required;
