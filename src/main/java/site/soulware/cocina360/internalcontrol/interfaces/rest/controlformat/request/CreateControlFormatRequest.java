@@ -5,9 +5,12 @@ import site.soulware.cocina360.internalcontrol.domain.model.command.CreateContro
 
 import java.util.UUID;
 
-public record CreateControlFormatRequest(@NotBlank String name) {
+public record CreateControlFormatRequest(
+    @NotBlank String name,
+    boolean createSampleFields
+) {
 
     public CreateControlFormatCommand toCommand(UUID processId) {
-        return new CreateControlFormatCommand(processId, this.name);
+        return new CreateControlFormatCommand(processId, this.name, this.createSampleFields);
     }
 }

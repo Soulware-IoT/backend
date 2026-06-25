@@ -15,7 +15,9 @@ import site.soulware.cocina360.internalcontrol.domain.model.exception.InvalidFor
 import site.soulware.cocina360.internalcontrol.domain.model.valueobject.ControlFormatId;
 import site.soulware.cocina360.internalcontrol.domain.model.valueobject.ControlFormatStatus;
 import site.soulware.cocina360.internalcontrol.domain.model.valueobject.ControlProcessId;
+import site.soulware.cocina360.internalcontrol.domain.model.valueobject.FieldType;
 import site.soulware.cocina360.internalcontrol.domain.model.valueobject.FormatFieldId;
+import site.soulware.cocina360.internalcontrol.domain.model.valueobject.NumberKind;
 import site.soulware.cocina360.internalcontrol.domain.model.valueobject.ValidationRules;
 import site.soulware.cocina360.shared.domain.model.aggregate.AggregateRoot;
 
@@ -59,6 +61,28 @@ public class ControlFormat extends AggregateRoot<ControlFormatId> {
                 List.of(), now, now);
 
         format.registerEvent(new ControlFormatCreated(id.value(), processId.value(), name, now));
+        return format;
+    }
+
+    /**
+     * Creates a new (DRAFT) format pre-populated with a starter template modelled on the most
+     * common restaurant control: checking the quality of incoming supplies. Built on top of
+     * {@link #create} so the same creation event is emitted, then the sample fields are added
+     * through the regular {@link #addField} path. The fields are immediately editable and
+     * removable, so they double as a worked example that lets the user discover customization
+     * quickly rather than facing an empty format. The record's timestamp is captured by the
+     * registry's {@code createdAt}, so no date field is seeded.
+     */
+    public static ControlFormat createWithSampleFields(ControlFormatId id, ControlProcessId processId, String name) {
+        ControlFormat format = create(id, processId, name);
+        format.addField(FormatField.create(FormatFieldId.generate(), "insumo", "Insumo / Producto",
+                FieldType.TEXT, true, 0, new ValidationRules.Text(null, 120, null)));
+        format.addField(FormatField.create(FormatFieldId.generate(), "temperatura_recepcion", "Temperatura de recepción (°C)",
+                FieldType.NUMBER, true, 1, new ValidationRules.Number(NumberKind.DECIMAL, -20.0, 90.0)));
+        format.addField(FormatField.create(FormatFieldId.generate(), "evaluacion", "Evaluación",
+                FieldType.SELECT, true, 2, new ValidationRules.Select(List.of("aceptado", "rechazado"))));
+        format.addField(FormatField.create(FormatFieldId.generate(), "observaciones", "Observaciones",
+                FieldType.TEXT, false, 3, new ValidationRules.Text(null, 500, null)));
         return format;
     }
 

@@ -9,13 +9,16 @@ import site.soulware.cocina360.internalcontrol.application.controlformat.Control
 import site.soulware.cocina360.internalcontrol.application.controlprocess.ControlProcessQueryService;
 import site.soulware.cocina360.internalcontrol.domain.model.command.ActivateControlFormatCommand;
 import site.soulware.cocina360.internalcontrol.domain.model.command.CeaseControlFormatCommand;
+import site.soulware.cocina360.internalcontrol.domain.model.command.RemoveFormatFieldCommand;
 import site.soulware.cocina360.internalcontrol.domain.model.command.ResumeControlFormatCommand;
 import site.soulware.cocina360.internalcontrol.domain.model.command.SuspendControlFormatCommand;
 import site.soulware.cocina360.internalcontrol.domain.model.query.GetControlFormatQuery;
 import site.soulware.cocina360.internalcontrol.domain.model.query.GetControlFormatsByProcessQuery;
 import site.soulware.cocina360.internalcontrol.domain.model.query.GetControlProcessQuery;
 import site.soulware.cocina360.internalcontrol.domain.model.valueobject.ControlFormatId;
+import site.soulware.cocina360.internalcontrol.interfaces.rest.controlformat.request.AddFormatFieldRequest;
 import site.soulware.cocina360.internalcontrol.interfaces.rest.controlformat.request.CreateControlFormatRequest;
+import site.soulware.cocina360.internalcontrol.interfaces.rest.controlformat.request.UpdateFormatFieldRequest;
 import site.soulware.cocina360.internalcontrol.interfaces.rest.controlformat.response.ControlFormatResponse;
 
 import java.util.List;
@@ -99,6 +102,43 @@ public class ControlFormatController {
     public ResponseEntity<ControlFormatResponse> cease(@PathVariable UUID id) {
         this.queryService.handle(new GetControlFormatQuery(id));
         this.commandService.handle(new CeaseControlFormatCommand(id));
+        return ResponseEntity.ok(
+                ControlFormatResponse.from(this.queryService.handle(new GetControlFormatQuery(id)))
+        );
+    }
+
+    @PostMapping("/formats/{id}/fields")
+    public ResponseEntity<ControlFormatResponse> addField(
+        @PathVariable UUID id,
+        @RequestBody @Valid AddFormatFieldRequest request
+    ) {
+        this.queryService.handle(new GetControlFormatQuery(id));
+        this.commandService.handle(request.toCommand(id));
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                ControlFormatResponse.from(this.queryService.handle(new GetControlFormatQuery(id)))
+        );
+    }
+
+    @PatchMapping("/formats/{id}/fields/{fieldId}")
+    public ResponseEntity<ControlFormatResponse> updateField(
+        @PathVariable UUID id,
+        @PathVariable UUID fieldId,
+        @RequestBody @Valid UpdateFormatFieldRequest request
+    ) {
+        this.queryService.handle(new GetControlFormatQuery(id));
+        this.commandService.handle(request.toCommand(id, fieldId));
+        return ResponseEntity.ok(
+                ControlFormatResponse.from(this.queryService.handle(new GetControlFormatQuery(id)))
+        );
+    }
+
+    @DeleteMapping("/formats/{id}/fields/{fieldId}")
+    public ResponseEntity<ControlFormatResponse> removeField(
+        @PathVariable UUID id,
+        @PathVariable UUID fieldId
+    ) {
+        this.queryService.handle(new GetControlFormatQuery(id));
+        this.commandService.handle(new RemoveFormatFieldCommand(id, fieldId));
         return ResponseEntity.ok(
                 ControlFormatResponse.from(this.queryService.handle(new GetControlFormatQuery(id)))
         );

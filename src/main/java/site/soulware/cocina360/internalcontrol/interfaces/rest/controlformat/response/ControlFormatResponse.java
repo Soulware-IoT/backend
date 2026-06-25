@@ -3,7 +3,7 @@ package site.soulware.cocina360.internalcontrol.interfaces.rest.controlformat.re
 import site.soulware.cocina360.internalcontrol.application.controlformat.ControlFormatResult;
 import site.soulware.cocina360.internalcontrol.domain.model.valueobject.ControlFormatStatus;
 import site.soulware.cocina360.internalcontrol.domain.model.valueobject.FieldType;
-import site.soulware.cocina360.internalcontrol.domain.model.valueobject.ValidationRules;
+import site.soulware.cocina360.internalcontrol.interfaces.rest.controlformat.request.ValidationRulesPayload;
 
 import java.time.Instant;
 import java.util.List;
@@ -26,7 +26,7 @@ public record ControlFormatResponse(
             FieldType type,
             boolean required,
             int displayOrder,
-            ValidationRules validationRules
+            ValidationRulesPayload validationRules
     ) {
 
         static Field from(ControlFormatResult.Field field) {
@@ -37,7 +37,7 @@ public record ControlFormatResponse(
                     field.type(),
                     field.required(),
                     field.displayOrder(),
-                    field.validationRules()
+                    ValidationRulesPayload.from(field.validationRules())
             );
         }
     }
