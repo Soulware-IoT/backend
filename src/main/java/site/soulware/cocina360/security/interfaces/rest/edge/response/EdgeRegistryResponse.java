@@ -16,7 +16,7 @@ public record EdgeRegistryResponse(
 ) {
 
     public record Device(
-        UUID deviceId,
+        UUID id,
         String code,
         String name,
         String apiKey,
