@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Script de arranque local con credenciales
+run-local*.sh
