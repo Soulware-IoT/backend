@@ -23,20 +23,21 @@ public record ClaimDeviceRequest(
 ) {
 
     public record Thresholds(
-        int warnTemperatureC,
-        int critTemperatureC,
-        double warnGasPpm,
-        double critGasPpm
-    ) {}
+        Temperature temperature,
+        Gas gas
+    ) {
+        public record Temperature(int warn, int crit) {}
+        public record Gas(double warn, double crit) {}
+    }
 
     public ClaimDeviceCommand toCommand(UUID organizationId, UUID requesterId) {
         SafetyThresholds thresholds = this.thresholds == null
                 ? null
                 : new SafetyThresholds(
-                        this.thresholds.warnTemperatureC(),
-                        this.thresholds.critTemperatureC(),
-                        this.thresholds.warnGasPpm(),
-                        this.thresholds.critGasPpm());
+                        this.thresholds.temperature().warn(),
+                        this.thresholds.temperature().crit(),
+                        this.thresholds.gas().warn(),
+                        this.thresholds.gas().crit());
         return new ClaimDeviceCommand(organizationId, this.code, this.name, thresholds, requesterId);
     }
 }
