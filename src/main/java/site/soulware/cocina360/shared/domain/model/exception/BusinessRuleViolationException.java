@@ -1,13 +1,13 @@
 package site.soulware.cocina360.shared.domain.model.exception;
 
 /**
- * Thrown when an explicit business rule is violated inside a domain operation.
+ * Thrown when an explicit business rule is violated inside a domain operation. Maps to
+ * HTTP 422.
  * <p>
- * In its core it behaves like any other {@link DomainException}: subclasses pass their
- * own i18n {@code messageKey} (and optional args), which {@code GlobalExceptionHandler}
- * resolves via {@code MessageSource}. The "business rule violated" framing is added by
- * the handler as a translated prefix ({@code error.business_rule.violated}), not baked
- * into the key here — so each rule still surfaces its own specific, translated message.
+ * It behaves like any other {@link DomainException}: subclasses pass their own i18n
+ * {@code messageKey} (and optional args), which {@code GlobalExceptionHandler} resolves
+ * via {@code MessageSource} and returns verbatim as the error message — each rule surfaces
+ * its own specific, translated message with no added prefix.
  */
 public class BusinessRuleViolationException extends DomainException {
 

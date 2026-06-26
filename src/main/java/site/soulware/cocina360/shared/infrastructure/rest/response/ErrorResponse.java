@@ -1,4 +1,4 @@
-package site.soulware.cocina360.shared.infrastructure.rest;
+package site.soulware.cocina360.shared.infrastructure.rest.response;
 
 import java.time.Instant;
 

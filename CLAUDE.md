@@ -107,8 +107,10 @@ Base classes that all modules reuse, located at `site.soulware.cocina360.shared`
 | `shared.domain.model.exception.EntityNotFoundException` | Thrown when an aggregate cannot be found; maps to HTTP 404 |
 | `shared.domain.model.exception.BusinessRuleViolationException` | Thrown when a named business rule is violated; maps to HTTP 422 |
 | `shared.domain.repository.DomainRepository<A, ID>` | Marker interface for domain repository contracts |
-| `shared.infrastructure.rest.GlobalExceptionHandler` | `@RestControllerAdvice` — maps all exceptions to `ErrorResponse`; resolves messages via `MessageSource` |
-| `shared.infrastructure.rest.ErrorResponse` | Standard error envelope: `{ status, error, message, timestamp }` |
+| `shared.infrastructure.rest.DomainExceptionHandler` | `@RestControllerAdvice` (highest precedence) — maps `DomainException`s (404/422/401/400) to `ErrorResponse` |
+| `shared.infrastructure.rest.WebExceptionHandler` | `@RestControllerAdvice` (lowest precedence) — maps framework/Java exceptions (validation, type mismatch) and the `Exception` catch-all (500) |
+| `shared.infrastructure.rest.i18n.MessageResolver` | `@Component` shared by both handlers — resolves message keys/args via `MessageSource` + request locale |
+| `shared.infrastructure.rest.response.ErrorResponse` | Standard error envelope: `{ status, error, message, timestamp }` |
 | `shared.infrastructure.config.ValidationConfig` | Wires `LocalValidatorFactoryBean` to use the application `MessageSource` |
 
 ### Cross-Context ID References
@@ -126,7 +128,7 @@ To verify those dependencies **without breaking module boundaries**, the owning 
 Rules:
 - The facade lives in the owning module's **`interfaces/acl`** package (e.g. `profiles.interfaces.acl.ProfilesApi`). That package's `package-info.java` carries `@org.springframework.modulith.NamedInterface("acl")`, which exposes it as consumable API (sub-packages are otherwise module-internal; only the root package is exposed by default). Both the port and its `@Service` adapter (e.g. `ProfilesApiImpl`) live in this package — the adapter depends on the module's `application` query service (the normal `interfaces → application` direction).
 - The facade method signatures use **only shared types** (`shared.domain.model.valueobject.*`) or primitives — never the other module's internal aggregates, `Result` records, or query/command records. A method returns, e.g., a `ProfileId`, not a `Profile` or `ProfileResult`.
-- **Existence is enforced by reusing the existing domain exception.** The adapter delegates to the query service, which already throws the canonical `*NotFoundException` (e.g. `ProfileNotFoundException.byEmail(...)`). That exception propagates unchanged up to `GlobalExceptionHandler`, so consumers never reimplement "not found" logic or invent new message keys.
+- **Existence is enforced by reusing the existing domain exception.** The adapter delegates to the query service, which already throws the canonical `*NotFoundException` (e.g. `ProfileNotFoundException.byEmail(...)`). That exception propagates unchanged up to `DomainExceptionHandler`, so consumers never reimplement "not found" logic or invent new message keys.
 - The consumer calls the facade as a guard, then proceeds. Example: the invitation flow calls `profilesApi.requireProfileId(requesterId)` (throws `ProfileNotFoundException` if absent) and an `organizations`-internal `OrganizationQueryService` lookup for the organization, before creating the invitation.
 
 ```java
@@ -168,17 +170,32 @@ This keeps the embed in-process (one call, same DB) — eliminating a client rou
 
 The same robustness rule applies to references **within** a single bounded context. Before a controller dispatches a command that targets or references an existing aggregate/entity of its own context, it **verifies existence through the context's own query service** — the query service already throws the canonical `*NotFoundException` when the resource is absent.
 
-- The check is a `queryService.handle(GetXQuery)` call; its `*NotFoundException` propagates to `GlobalExceptionHandler`, so the endpoint returns a correct 404 without the controller writing any conditional/exception logic.
+- The check is a `queryService.handle(GetXQuery)` call; its `*NotFoundException` propagates to `DomainExceptionHandler`, so the endpoint returns a correct 404 without the controller writing any conditional/exception logic.
 - This fits the established CQRS flow (controller → command service → query service): the verifying query and the post-command read use the **same** query service, reusing the same exceptions and message keys.
 - The result: every endpoint that names a referenced resource is robust by construction — a missing aggregate/entity surfaces as the existing domain exception rather than a downstream constraint error or a `NullPointerException`.
 
 In short: **cross-context references are guarded via the owning module's facade; same-context references are guarded via the context's own query service.** Both reuse existing domain exceptions instead of reimplementing not-found handling.
 
+### REST Verb Conventions: state transitions vs. partial updates
+
+State changes are exposed one of two ways, chosen by the **shape of the change in the domain** — not by author preference. The two existing controllers are both correct because they model different shapes:
+
+| Shape | Verb / route | When |
+|---|---|---|
+| **Guarded state-machine transition** | `POST /{resource}/{id}/{action}` | The status field has a transition graph (illegal transitions are rejected) **and** each transition is a distinct domain operation that emits its own event. The action verb *is* the operation; the client triggers it, it cannot freely assign the target state. |
+| **Partial attribute update** | `PATCH /{resource}/{id}` | Status is a plain settable toggle (e.g. `ACTIVE`/`INACTIVE`) alongside other editable attributes (name, config). The request merges whichever fields are present; omitted fields are left unchanged. |
+
+Examples in the codebase:
+- **`POST` + action** — `InvitationController` (`/invitations/{id}/accept`, `/decline`): each transition is its own command with side effects (accepting creates a membership). `ControlFormatController` follows the same idiom for its `DRAFT → ACTIVE → SUSPENDED/CEASED` lifecycle (`ControlFormatStatus.canTransitionTo` guards transitions; each emits a distinct event).
+- **`PATCH`** — `IoTDeviceController` (`PATCH /iot-devices/{id}`): activation is a flat toggle merged with `name` and `thresholds` in one partial update.
+
+Do not force the two idioms to converge — a guarded transition modelled as a `PATCH {status}` would have to reject most field combinations, and a multi-field toggle modelled as `POST /action` fragments a single edit into several calls. Pick by the rule above. Each action endpoint still follows the standard flow (verify existence → command service → query service read of the updated state).
+
 ### Exception Conventions
 
 - All domain exceptions extend `DomainException` and pass a **message key** (not a hardcoded string) to the super constructor, e.g. `super("error.profile.not_found_by_id", id)`.
 - Each bounded context defines its own specific exception classes with the key burned in — application services never pass raw string keys.
-- `GlobalExceptionHandler` resolves the key via `MessageSource` + `LocaleContextHolder.getLocale()` to produce a translated message.
+- `DomainExceptionHandler` (via the shared `MessageResolver`) resolves the key via `MessageSource` + `LocaleContextHolder.getLocale()` to produce a translated message.
 
 ### i18n
 
@@ -186,6 +203,8 @@ In short: **cross-context references are guarded via the owning module's facade;
 - Spring's `AcceptHeaderLocaleResolver` picks up the locale automatically; default falls back to `en` (`spring.mvc.locale=en`).
 - All user-facing messages live in `src/main/resources/messages.properties` and `messages_es.properties`, organized by bounded context using comment sections.
 - Bean Validation constraint messages also resolve from these files (via `ValidationConfig`), using standard keys like `jakarta.validation.constraints.NotBlank.message`.
+- **Translatable enums (by convention):** when a domain enum is passed as a **message argument** (e.g. `super("error.control.format.cannot_resume", currentStatus)`), the shared `MessageResolver` detects any `Enum` arg and substitutes its locale-resolved label before formatting — so users never see the internal value. The key is derived by convention from the type + value: `ControlFormatStatus.DRAFT` → `enum.control.format.status.draft` (→ `Draft`/`Borrador`). Domain enums stay **plain** — no marker interface, no i18n method; a new enum is covered just by adding its `enum.*` keys to both bundles.
+- **Enum JSON representation:** domain enums carry **no** `@JsonValue`/`label()`. A single boundary-side `JacksonConfig` (`shared.infrastructure.config`) registers a `Module` that serializes every enum lowercase by `name()`, and `spring.jackson.mapper.accept-case-insensitive-enums=true` reads them back case-insensitively. Keeps serialization concerns out of the domain and uniform across all modules.
 
 ### Domain Events Flow
 
@@ -254,7 +273,7 @@ public static ControlFormat rehydrate(
 
 | Variable | Value format |
 |---|---|
-| `DB_URL` | `jdbc:postgresql://<pooler-host>:5432/postgres?sslmode=require&prepareThreshold=0` |
+| `DB_URL` | `jdbc:postgresql://<pooler-host>:6543/postgres?sslmode=require&prepareThreshold=0` |
 | `DB_USERNAME` | `postgres.<project-ref>` (pooler format) |
 | `DB_PASSWORD` | Supabase DB password |
 | `MONGODB_URI` | `mongodb://<host>:27017/cocina360` (telemetry `Reading` store) |

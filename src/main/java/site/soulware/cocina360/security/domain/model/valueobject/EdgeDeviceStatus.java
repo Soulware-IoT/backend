@@ -1,7 +1,5 @@
 package site.soulware.cocina360.security.domain.model.valueobject;
 
-import com.fasterxml.jackson.annotation.JsonValue;
-
 /**
  * The lifecycle of an edge device:
  * <ul>
@@ -12,18 +10,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * </ul>
  */
 public enum EdgeDeviceStatus {
-    PROVISIONED("provisioned"),
-    ACTIVE("active"),
-    INACTIVE("inactive");
-
-    private final String label;
-
-    EdgeDeviceStatus(String label) {
-        this.label = label;
-    }
-
-    @JsonValue
-    public String label() {
-        return this.label;
-    }
+    PROVISIONED,
+    ACTIVE,
+    INACTIVE
 }
