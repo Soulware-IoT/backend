@@ -33,8 +33,8 @@ public class OpenApiConfig {
     public OpenAPI customOpenAPI() {
         // The deployed (Railway) target — second in the list, so it is the non-default option.
         Server productionServer = new Server()
-                .url("https://backend-production-c5e8.up.railway.app")
-                .description("Servidor de Producción (Railway)");
+                .url("https://www.api.cocina360.soulware.site")
+                .description("Servidor de Producción (Render)");
 
         // The local dev target — listed first below, so it is Swagger UI's default selection.
         Server localServer = new Server()
