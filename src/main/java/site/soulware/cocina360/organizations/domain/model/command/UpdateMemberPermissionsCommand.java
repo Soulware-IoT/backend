@@ -7,6 +7,7 @@ import java.util.UUID;
 public record UpdateMemberPermissionsCommand(
         UUID organizationId,
         UUID memberId,
+        UUID requesterId,
         PermissionLevel security,
         PermissionLevel organizations,
         PermissionLevel internalControl

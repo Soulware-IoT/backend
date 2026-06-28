@@ -9,10 +9,15 @@ import site.soulware.cocina360.internalcontrol.application.controlprocess.Contro
 import site.soulware.cocina360.internalcontrol.domain.model.query.GetControlProcessQuery;
 import site.soulware.cocina360.internalcontrol.domain.model.query.GetControlProcessesByOrganizationQuery;
 import site.soulware.cocina360.internalcontrol.domain.model.valueobject.ControlProcessId;
+import site.soulware.cocina360.internalcontrol.infrastructure.persistence.authz.ControlOrganizationQuery;
 import site.soulware.cocina360.internalcontrol.interfaces.rest.controlprocess.request.CreateControlProcessRequest;
 import site.soulware.cocina360.internalcontrol.interfaces.rest.controlprocess.request.RenameControlProcessRequest;
 import site.soulware.cocina360.internalcontrol.interfaces.rest.controlprocess.response.ControlProcessResponse;
+import site.soulware.cocina360.organizations.interfaces.acl.AccessLevel;
+import site.soulware.cocina360.organizations.interfaces.acl.AuthorizationApi;
 import site.soulware.cocina360.organizations.interfaces.acl.OrganizationsApi;
+import site.soulware.cocina360.organizations.interfaces.acl.PermissionArea;
+import site.soulware.cocina360.shared.infrastructure.auth.CurrentUser;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,23 +28,31 @@ public class ControlProcessController {
     private final ControlProcessCommandService commandService;
     private final ControlProcessQueryService queryService;
     private final OrganizationsApi organizationsApi;
+    private final AuthorizationApi authorizationApi;
+    private final ControlOrganizationQuery controlOrganizationQuery;
 
     public ControlProcessController(
         ControlProcessCommandService commandService,
         ControlProcessQueryService queryService,
-        OrganizationsApi organizationsApi
+        OrganizationsApi organizationsApi,
+        AuthorizationApi authorizationApi,
+        ControlOrganizationQuery controlOrganizationQuery
     ) {
         this.commandService = commandService;
         this.queryService = queryService;
         this.organizationsApi = organizationsApi;
+        this.authorizationApi = authorizationApi;
+        this.controlOrganizationQuery = controlOrganizationQuery;
     }
 
     @PostMapping("/organizations/{organizationId}/control-processes")
     public ResponseEntity<ControlProcessResponse> create(
         @PathVariable UUID organizationId,
-        @RequestBody @Valid CreateControlProcessRequest request
+        @RequestBody @Valid CreateControlProcessRequest request,
+        @CurrentUser UUID requesterId
     ) {
         this.organizationsApi.requireOrganizationId(organizationId);
+        this.authorizationApi.requirePermission(organizationId, requesterId, PermissionArea.INTERNAL_CONTROL, AccessLevel.ADMIN);
         ControlProcessId id = this.commandService.handle(request.toCommand(organizationId));
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 ControlProcessResponse.from(this.queryService.handle(new GetControlProcessQuery(id.value())))
@@ -47,8 +60,12 @@ public class ControlProcessController {
     }
 
     @GetMapping("/organizations/{organizationId}/control-processes")
-    public ResponseEntity<List<ControlProcessResponse>> listByOrganization(@PathVariable UUID organizationId) {
+    public ResponseEntity<List<ControlProcessResponse>> listByOrganization(
+        @PathVariable UUID organizationId,
+        @CurrentUser UUID requesterId
+    ) {
         this.organizationsApi.requireOrganizationId(organizationId);
+        this.authorizationApi.requirePermission(organizationId, requesterId, PermissionArea.INTERNAL_CONTROL, AccessLevel.ASSIGNEE);
         List<ControlProcessResponse> responses = this.queryService
                 .handle(new GetControlProcessesByOrganizationQuery(organizationId))
                 .stream()
@@ -58,7 +75,11 @@ public class ControlProcessController {
     }
 
     @GetMapping("/control-processes/{id}")
-    public ResponseEntity<ControlProcessResponse> getById(@PathVariable UUID id) {
+    public ResponseEntity<ControlProcessResponse> getById(
+        @PathVariable UUID id,
+        @CurrentUser UUID requesterId
+    ) {
+        this.authorizeByProcess(id, requesterId, AccessLevel.ASSIGNEE);
         return ResponseEntity.ok(
                 ControlProcessResponse.from(this.queryService.handle(new GetControlProcessQuery(id)))
         );
@@ -67,11 +88,19 @@ public class ControlProcessController {
     @PatchMapping("/control-processes/{id}")
     public ResponseEntity<ControlProcessResponse> rename(
         @PathVariable UUID id,
-        @RequestBody @Valid RenameControlProcessRequest request
+        @RequestBody @Valid RenameControlProcessRequest request,
+        @CurrentUser UUID requesterId
     ) {
+        this.authorizeByProcess(id, requesterId, AccessLevel.ADMIN);
         this.commandService.handle(request.toCommand(id));
         return ResponseEntity.ok(
                 ControlProcessResponse.from(this.queryService.handle(new GetControlProcessQuery(id)))
         );
+    }
+
+    /** Resolves the process's owning org and checks the requester's internal-control level. */
+    private void authorizeByProcess(UUID processId, UUID requesterId, AccessLevel minimum) {
+        this.controlOrganizationQuery.findByProcess(processId)
+                .ifPresent(orgId -> this.authorizationApi.requirePermission(orgId, requesterId, PermissionArea.INTERNAL_CONTROL, minimum));
     }
 }

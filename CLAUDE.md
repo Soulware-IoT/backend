@@ -215,7 +215,18 @@ Do not force the two idioms to converge — a guarded transition modelled as a `
 
 ### Security / Auth
 
-Authentication and authorization are **out of scope** for this service. An API gateway sits in front of this monolith and validates JWT tokens issued by Supabase Auth before any request reaches here. This service trusts that incoming requests are already authenticated — do not add Spring Security, JWT parsing, or any auth logic.
+The API gateway is now a **pure forwarder** — it no longer validates anything. It passes the Supabase JWT (`Authorization: Bearer …`) and `Accept-Language` straight through. This service therefore owns **both** authentication and authorization.
+
+**Authentication (Spring Security, OAuth2 Resource Server).** `shared.infrastructure.auth.SecurityConfig` configures the app as a JWT resource server: it verifies the Supabase token's signature (**ES256**, via the project's **JWKS** — `spring.security.oauth2.resourceserver.jwt.jwk-set-uri=${SUPABASE_JWKS_URI}`) and expiry on every request.
+- The `SecurityFilterChain` requires a valid JWT for every request **except** `/edge/**` and `/internal/**` (machine-to-machine, authenticated by `X-Edge-Api-Key`) and the OpenAPI docs — those are `permitAll`.
+- A failed/missing token yields **401** via a custom `AuthenticationEntryPoint` that writes the standard `ErrorResponse` envelope (i18n).
+- The requester's id is the JWT `sub` claim, which **equals the `ProfileId`**. Controllers read it via `@CurrentUser UUID requesterId` (`CurrentUserArgumentResolver`) — this replaces the former `@RequestHeader("X-Requester-Id")` (the gateway no longer extracts it).
+
+**Authorization (DB-backed, per request).** The JWT also carries an org→area→role map, but it is **ignored** for authz — the source of truth is the database, read **live on every request** (anti-staleness: a permission change in the DB takes effect immediately, without the user refreshing their token). See [`permission-matrix.md`](permission-matrix.md) for the full matrix.
+- Authz is exposed by the `organizations` context as a named-interface facade: `organizations.interfaces.acl.AuthorizationApi`, with the published vocabulary `PermissionArea` (`SECURITY`/`ORGANIZATIONS`/`INTERNAL_CONTROL`) and ranked `AccessLevel` (`NONE` < `ASSIGNEE` < `LIEUTENANT` < `ADMIN`). Consuming contexts depend only on this port. `requirePermission(orgId, profileId, area, minimum)` throws `InsufficientPermissionException` (**403**) if the member's level in that area is below the minimum (or they are not a member).
+- Reads use **native SQL projections**, one JOIN **per context** — never a cross-context JOIN (keeps module/schema boundaries; mirrors the CQRS double round-trip). `MemberPermissionJpaQuery` (in `organizations`) resolves the requester's levels; each context owns an `infrastructure/persistence/authz/` query to resolve a by-id resource's **owning org** within its own schema (`DeviceOrganizationQuery` for security; `ControlOrganizationQuery` for internal-control: process→org, format→process→org, registry→format→process→org). The org is the path `{organizationId}` when present, otherwise resolved from the resource.
+- **Self-scoped** endpoints (`GET /organizations?profileId`, `GET /profiles/{profileId}/invitations`) require `requesterId == profileId` (`SelfAccessRequiredException`, 403). Profile reads (`GET /profiles/**`) need only a valid JWT (no role check).
+- **Relational grant rule** (`PUT members/{id}/permissions`): an actor may assign only levels **strictly below their own** organizations-area level (`OrganizationMemberPermissions.assignableBy`) — this single rule subsumes the old "admin not grantable" guard. The endpoint also has a `LIEUTENANT` floor guard.
 
 ### Persistence (Supabase / PostgreSQL)
 
@@ -277,3 +288,4 @@ public static ControlFormat rehydrate(
 | `DB_USERNAME` | `postgres.<project-ref>` (pooler format) |
 | `DB_PASSWORD` | Supabase DB password |
 | `MONGODB_URI` | `mongodb://<host>:27017/cocina360` (telemetry `Reading` store) |
+| `SUPABASE_JWKS_URI` | `https://<project-ref>.supabase.co/auth/v1/.well-known/jwks.json` (JWT signature verification, ES256) |

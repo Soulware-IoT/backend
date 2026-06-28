@@ -1,7 +1,10 @@
 package site.soulware.cocina360.shared.infrastructure.config;
 
+import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import org.springdoc.core.customizers.GlobalOpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
@@ -41,7 +44,20 @@ public class OpenApiConfig {
                 .url("http://localhost:8080")
                 .description("Servidor Local");
 
-        return new OpenAPI().servers(List.of(localServer, productionServer));
+        // Bearer JWT scheme: surfaces the "Authorize" button in Swagger UI so the Supabase token can
+        // be pasted once and sent as `Authorization: Bearer <token>` on every "Try it out" request.
+        // Applied globally; /edge/** and /internal/** ignore it (they use X-Edge-Api-Key, not JWT).
+        String bearerScheme = "bearerAuth";
+        SecurityScheme jwtScheme = new SecurityScheme()
+                .name(bearerScheme)
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("bearer")
+                .bearerFormat("JWT");
+
+        return new OpenAPI()
+                .servers(List.of(localServer, productionServer))
+                .components(new Components().addSecuritySchemes(bearerScheme, jwtScheme))
+                .addSecurityItem(new SecurityRequirement().addList(bearerScheme));
     }
 
     /**
