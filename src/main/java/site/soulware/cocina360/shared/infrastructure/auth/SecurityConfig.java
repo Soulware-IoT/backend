@@ -73,7 +73,8 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(SecurityConfig::disableCsrf)
+        http.cors(Customizer.withDefaults())
+            .csrf(SecurityConfig::disableCsrf)
             .sessionManagement(SecurityConfig::useStatelessSessions)
             .authorizeHttpRequests(SecurityConfig::permitPublicPathsAuthenticateRest)
             .oauth2ResourceServer(SecurityConfig::enableJwtResourceServer)
