@@ -22,6 +22,7 @@ import site.soulware.cocina360.security.interfaces.rest.iotdevice.request.ClaimD
 import site.soulware.cocina360.security.interfaces.rest.iotdevice.request.UpdateIoTDeviceRequest;
 import site.soulware.cocina360.security.interfaces.rest.iotdevice.response.IoTDeviceResponse;
 import site.soulware.cocina360.shared.infrastructure.auth.CurrentUser;
+import site.soulware.cocina360.subscriptions.interfaces.acl.SubscriptionsApi;
 
 import java.util.List;
 import java.util.UUID;
@@ -40,6 +41,7 @@ public class IoTDeviceController {
     private final EdgeDeviceQueryService edgeDeviceQueryService;
     private final OrganizationsApi organizationsApi;
     private final AuthorizationApi authorizationApi;
+    private final SubscriptionsApi subscriptionsApi;
     private final DeviceOrganizationQuery deviceOrganizationQuery;
 
     public IoTDeviceController(
@@ -48,6 +50,7 @@ public class IoTDeviceController {
         EdgeDeviceQueryService edgeDeviceQueryService,
         OrganizationsApi organizationsApi,
         AuthorizationApi authorizationApi,
+        SubscriptionsApi subscriptionsApi,
         DeviceOrganizationQuery deviceOrganizationQuery
     ) {
         this.commandService = commandService;
@@ -55,6 +58,7 @@ public class IoTDeviceController {
         this.edgeDeviceQueryService = edgeDeviceQueryService;
         this.organizationsApi = organizationsApi;
         this.authorizationApi = authorizationApi;
+        this.subscriptionsApi = subscriptionsApi;
         this.deviceOrganizationQuery = deviceOrganizationQuery;
     }
 
@@ -66,6 +70,7 @@ public class IoTDeviceController {
     ) {
         this.organizationsApi.requireOrganizationId(organizationId);
         this.authorizationApi.requirePermission(organizationId, requesterId, PermissionArea.SECURITY, AccessLevel.LIEUTENANT);
+        this.subscriptionsApi.enforceDeviceQuota(organizationId, this.queryService.countByOrganization(organizationId));
         this.edgeDeviceQueryService.handle(new GetEdgeDeviceByOrganizationQuery(organizationId));
 
         IoTDeviceId deviceId = this.commandService.handle(request.toCommand(organizationId, requesterId));

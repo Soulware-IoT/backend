@@ -1,6 +1,7 @@
 package site.soulware.cocina360.organizations.interfaces.acl;
 
 import site.soulware.cocina360.shared.domain.model.valueobject.OrganizationId;
+import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
 
 import java.util.UUID;
 
@@ -21,4 +22,11 @@ public interface OrganizationsApi {
      * @throws site.soulware.cocina360.organizations.domain.model.exception.OrganizationNotFoundException if absent
      */
     OrganizationId requireOrganizationId(UUID organizationId);
+
+    /**
+     * Resolves the billable party of an organization (the profile recorded as its owner).
+     *
+     * @throws site.soulware.cocina360.organizations.domain.model.exception.OrganizationNotFoundException if absent
+     */
+    ProfileId requireOwnerProfileId(UUID organizationId);
 }
