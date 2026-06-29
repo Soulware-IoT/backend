@@ -20,7 +20,6 @@ import site.soulware.cocina360.organizations.interfaces.acl.PermissionArea;
 import site.soulware.cocina360.organizations.interfaces.rest.invitation.request.InviteRequest;
 import site.soulware.cocina360.organizations.interfaces.rest.invitation.response.InvitationResponse;
 import site.soulware.cocina360.profiles.interfaces.acl.ProfilesApi;
-import site.soulware.cocina360.shared.domain.model.exception.SelfAccessRequiredException;
 import site.soulware.cocina360.shared.infrastructure.auth.CurrentUser;
 
 import java.util.List;
@@ -73,13 +72,9 @@ public class InvitationController {
                         .stream().map(InvitationResponse::from).toList());
     }
 
-    @GetMapping("/profiles/{profileId}/invitations")
-    public ResponseEntity<List<InvitationResponse>> listByInvitedUser(
-        @PathVariable UUID profileId,
-        @CurrentUser UUID requesterId
-    ) {
-        this.requireSelf(requesterId, profileId);
-        String invitedEmail = this.profilesApi.requireEmailByProfileId(profileId);
+    @GetMapping("/invitations")
+    public ResponseEntity<List<InvitationResponse>> listMine(@CurrentUser UUID requesterId) {
+        String invitedEmail = this.profilesApi.requireEmailByProfileId(requesterId);
         return ResponseEntity.ok(
                 this.queryService.handle(new ListInvitationsByInvitedEmailQuery(invitedEmail))
                         .stream().map(InvitationResponse::from).toList());
@@ -122,11 +117,5 @@ public class InvitationController {
 
     private void requireOrganization(UUID organizationId) {
         this.organizationQueryService.handle(new GetOrganizationQuery(organizationId));
-    }
-
-    private void requireSelf(UUID requesterId, UUID targetProfileId) {
-        if (!requesterId.equals(targetProfileId)) {
-            throw new SelfAccessRequiredException();
-        }
     }
 }

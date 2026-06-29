@@ -16,7 +16,6 @@ import site.soulware.cocina360.organizations.interfaces.rest.organization.reques
 import site.soulware.cocina360.organizations.interfaces.rest.organization.request.UpdateOrganizationRequest;
 import site.soulware.cocina360.organizations.interfaces.rest.organization.response.OrganizationResponse;
 import site.soulware.cocina360.profiles.interfaces.acl.ProfilesApi;
-import site.soulware.cocina360.shared.domain.model.exception.SelfAccessRequiredException;
 import site.soulware.cocina360.shared.infrastructure.auth.CurrentUser;
 
 import java.util.List;
@@ -55,14 +54,10 @@ public class OrganizationController {
                 .body(OrganizationResponse.from(this.queryService.handle(new GetOrganizationQuery(organizationId.value()))));
     }
 
-    @GetMapping(params = "profileId")
-    public ResponseEntity<List<OrganizationResponse>> listByProfile(
-        @RequestParam UUID profileId,
-        @CurrentUser UUID requesterId
-    ) {
-        this.requireSelf(requesterId, profileId);
+    @GetMapping
+    public ResponseEntity<List<OrganizationResponse>> listMine(@CurrentUser UUID requesterId) {
         List<OrganizationResponse> organizations = this.queryService
-                .handle(new ListOrganizationsByProfileQuery(profileId)).stream()
+                .handle(new ListOrganizationsByProfileQuery(requesterId)).stream()
                 .map(OrganizationResponse::from)
                 .toList();
         return ResponseEntity.ok(organizations);
@@ -99,11 +94,5 @@ public class OrganizationController {
         this.authorizationApi.requirePermission(id, requesterId, PermissionArea.ORGANIZATIONS, AccessLevel.ADMIN);
         this.commandService.handle(new DeleteOrganizationCommand(id, requesterId));
         return ResponseEntity.noContent().build();
-    }
-
-    private void requireSelf(UUID requesterId, UUID targetProfileId) {
-        if (!requesterId.equals(targetProfileId)) {
-            throw new SelfAccessRequiredException();
-        }
     }
 }

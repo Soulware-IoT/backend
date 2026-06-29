@@ -7,8 +7,10 @@ import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import org.springdoc.core.customizers.GlobalOpenApiCustomizer;
+import org.springdoc.core.utils.SpringDocUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import site.soulware.cocina360.shared.infrastructure.auth.CurrentUser;
 
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -22,6 +24,12 @@ import java.util.Set;
  */
 @Configuration
 public class OpenApiConfig {
+
+    static {
+        // {@code @CurrentUser} parameters are resolved from the JWT, never sent by the client, so they
+        // must not appear as request parameters in the docs. Ignored globally for every endpoint.
+        SpringDocUtils.getConfig().addAnnotationsToIgnore(CurrentUser.class);
+    }
 
     /**
      * Supplies the base {@link OpenAPI} document, seeding only the list of servers (springdoc fills
