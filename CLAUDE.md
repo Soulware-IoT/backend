@@ -291,3 +291,4 @@ public static ControlFormat rehydrate(
 | `MONGODB_URI` | `mongodb://<host>:27017/cocina360` (telemetry `Reading` store) |
 | `SUPABASE_JWKS_URI` | `https://<project-ref>.supabase.co/auth/v1/.well-known/jwks.json` (JWT signature verification, ES256) |
 | `PROVISIONING_ENABLED` | `true`/`false` (default `false`) — registers the `/internal/**` device-provisioning endpoints. Enable only where devices are provisioned. |
+| `CORS_ALLOWED_ORIGINS` | CSV of browser origins allowed cross-origin (prod: the deployed frontend only). Dev overrides via `application-dev.properties`. |
