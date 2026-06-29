@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import site.soulware.cocina360.shared.domain.model.exception.BusinessRuleViolationException;
 import site.soulware.cocina360.shared.domain.model.exception.DomainException;
 import site.soulware.cocina360.shared.domain.model.exception.EntityNotFoundException;
+import site.soulware.cocina360.shared.domain.model.exception.ForbiddenException;
 import site.soulware.cocina360.shared.domain.model.exception.UnauthorizedException;
 import site.soulware.cocina360.shared.domain.model.exception.ValidationException;
 import site.soulware.cocina360.shared.infrastructure.rest.i18n.MessageResolver;
@@ -69,6 +70,13 @@ public class DomainExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(ErrorResponse.of(401, "Unauthorized", this.messages.resolve(ex)));
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ErrorResponse> handle(ForbiddenException ex) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(ErrorResponse.of(403, "Forbidden", this.messages.resolve(ex)));
     }
 
     @ExceptionHandler(DomainException.class)

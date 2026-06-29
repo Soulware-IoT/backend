@@ -1,11 +1,16 @@
 package site.soulware.cocina360.shared.infrastructure.config;
 
+import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import org.springdoc.core.customizers.GlobalOpenApiCustomizer;
+import org.springdoc.core.utils.SpringDocUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import site.soulware.cocina360.shared.infrastructure.auth.CurrentUser;
 
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -19,6 +24,12 @@ import java.util.Set;
  */
 @Configuration
 public class OpenApiConfig {
+
+    static {
+        // {@code @CurrentUser} parameters are resolved from the JWT, never sent by the client, so they
+        // must not appear as request parameters in the docs. Ignored globally for every endpoint.
+        SpringDocUtils.getConfig().addAnnotationsToIgnore(CurrentUser.class);
+    }
 
     /**
      * Supplies the base {@link OpenAPI} document, seeding only the list of servers (springdoc fills
@@ -41,7 +52,20 @@ public class OpenApiConfig {
                 .url("http://localhost:8080")
                 .description("Servidor Local");
 
-        return new OpenAPI().servers(List.of(localServer, productionServer));
+        // Bearer JWT scheme: surfaces the "Authorize" button in Swagger UI so the Supabase token can
+        // be pasted once and sent as `Authorization: Bearer <token>` on every "Try it out" request.
+        // Applied globally; /edge/** and /internal/** ignore it (they use X-Edge-Api-Key, not JWT).
+        String bearerScheme = "bearerAuth";
+        SecurityScheme jwtScheme = new SecurityScheme()
+                .name(bearerScheme)
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("bearer")
+                .bearerFormat("JWT");
+
+        return new OpenAPI()
+                .servers(List.of(localServer, productionServer))
+                .components(new Components().addSecuritySchemes(bearerScheme, jwtScheme))
+                .addSecurityItem(new SecurityRequirement().addList(bearerScheme));
     }
 
     /**

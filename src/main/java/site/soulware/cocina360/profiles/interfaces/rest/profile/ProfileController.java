@@ -9,6 +9,7 @@ import site.soulware.cocina360.profiles.domain.model.query.GetProfileByEmailQuer
 import site.soulware.cocina360.profiles.domain.model.query.GetProfileQuery;
 import site.soulware.cocina360.profiles.interfaces.rest.profile.request.UpdateProfileDetailsRequest;
 import site.soulware.cocina360.profiles.interfaces.rest.profile.response.ProfileResponse;
+import site.soulware.cocina360.shared.infrastructure.auth.CurrentUser;
 
 import java.util.UUID;
 
@@ -42,7 +43,7 @@ public class ProfileController {
     public ResponseEntity<ProfileResponse> updateDetails(
             @PathVariable UUID id,
             @RequestBody @Valid UpdateProfileDetailsRequest request,
-            @RequestHeader("X-Requester-Id") UUID requesterId) {
+            @CurrentUser UUID requesterId) {
 
         this.commandService.handle(request.toCommand(id, requesterId));
 
