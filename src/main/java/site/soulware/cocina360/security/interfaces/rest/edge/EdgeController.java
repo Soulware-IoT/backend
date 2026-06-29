@@ -1,6 +1,5 @@
 package site.soulware.cocina360.security.interfaces.rest.edge;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +17,7 @@ import site.soulware.cocina360.security.domain.model.command.UpdateEdgeDeviceCom
 import site.soulware.cocina360.security.domain.model.query.AuthenticateEdgeQuery;
 import site.soulware.cocina360.security.domain.model.query.GetDeviceRegistryQuery;
 import site.soulware.cocina360.security.interfaces.rest.edge.request.RecordReadingsRequest;
+import site.soulware.cocina360.security.interfaces.rest.edge.request.RegisterEdgeRequest;
 import site.soulware.cocina360.security.interfaces.rest.edge.response.EdgeIdentityResponse;
 import site.soulware.cocina360.security.interfaces.rest.edge.response.EdgeRegistryResponse;
 
@@ -51,19 +51,19 @@ public class EdgeController {
     /**
      * Self-registration handshake: authenticate the calling edge by its API key, record
      * its current IP for command routing, and return its identity and bound organization.
-     * The edge calls this on startup; the IP is used by the backend to reach the edge
-     * when sending device commands (e.g. servo).
+     * The edge calls this on startup; the IP is stored so the backend can route servo
+     * commands through the edge gateway to this specific edge app instance.
      *
      * @return 200 with the edge identity; 401 if the key is missing or unrecognised.
      */
     @PostMapping("/me")
     public ResponseEntity<EdgeIdentityResponse> me(
         @RequestHeader(name = API_KEY_HEADER, required = false) String apiKey,
-        HttpServletRequest request
+        @RequestBody @Valid RegisterEdgeRequest request
     ) {
         EdgeDeviceResult edge = this.edgeDeviceQueryService.handle(new AuthenticateEdgeQuery(apiKey));
         this.edgeDeviceCommandService.handle(
-                new UpdateEdgeDeviceCommand(edge.edgeDeviceId(), null, null, null, request.getRemoteAddr()));
+                new UpdateEdgeDeviceCommand(edge.edgeDeviceId(), null, null, null, request.ip()));
         return ResponseEntity.ok(EdgeIdentityResponse.from(edge));
     }
 

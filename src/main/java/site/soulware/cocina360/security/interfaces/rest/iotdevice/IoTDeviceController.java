@@ -22,6 +22,7 @@ import site.soulware.cocina360.security.domain.model.valueobject.IoTDeviceId;
 import site.soulware.cocina360.security.infrastructure.persistence.authz.DeviceOrganizationQuery;
 import site.soulware.cocina360.security.infrastructure.rest.EdgeGatewayClient;
 import site.soulware.cocina360.security.interfaces.rest.iotdevice.request.ClaimDeviceRequest;
+import site.soulware.cocina360.security.interfaces.rest.iotdevice.request.ServoCommandRequest;
 import site.soulware.cocina360.security.interfaces.rest.iotdevice.request.UpdateIoTDeviceRequest;
 import site.soulware.cocina360.security.interfaces.rest.iotdevice.response.IoTDeviceResponse;
 import site.soulware.cocina360.shared.infrastructure.auth.CurrentUser;
@@ -104,21 +105,15 @@ public class IoTDeviceController {
                 IoTDeviceResponse.from(this.queryService.handle(new GetIoTDeviceQuery(id))));
     }
 
-    @PostMapping("/iot-devices/{id}/start-servo")
-    public ResponseEntity<Void> startServo(@PathVariable UUID id) {
+    @PostMapping("/iot-devices/{id}/servo")
+    public ResponseEntity<Void> servo(
+        @PathVariable UUID id,
+        @RequestBody @Valid ServoCommandRequest request
+    ) {
         IoTDeviceResult device = this.queryService.handle(new GetIoTDeviceQuery(id));
         EdgeDeviceResult edge = this.edgeDeviceQueryService.handle(
                 new GetEdgeDeviceByOrganizationQuery(device.organizationId()));
-        this.edgeGatewayClient.sendServoCommand(edge.ip(), id, "start");
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping("/iot-devices/{id}/stop-servo")
-    public ResponseEntity<Void> stopServo(@PathVariable UUID id) {
-        IoTDeviceResult device = this.queryService.handle(new GetIoTDeviceQuery(id));
-        EdgeDeviceResult edge = this.edgeDeviceQueryService.handle(
-                new GetEdgeDeviceByOrganizationQuery(device.organizationId()));
-        this.edgeGatewayClient.sendServoCommand(edge.ip(), id, "stop");
+        this.edgeGatewayClient.sendServoCommand(edge.ip(), id, request.command().name().toLowerCase());
         return ResponseEntity.ok().build();
     }
 

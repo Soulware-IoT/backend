@@ -15,16 +15,16 @@ public class EdgeGatewayClient {
     private static final Logger log = LoggerFactory.getLogger(EdgeGatewayClient.class);
 
     private final RestClient restClient;
-    private final int port;
+    private final String gatewayUrl;
 
-    public EdgeGatewayClient(@Value("${edge.gateway.port}") int port) {
+    public EdgeGatewayClient(@Value("${edge.gateway.url}") String gatewayUrl) {
         this.restClient = RestClient.create();
-        this.port = port;
+        this.gatewayUrl = gatewayUrl;
     }
 
-    public void sendServoCommand(String ip, UUID deviceId, String command) {
-        String url = "http://" + ip + ":" + this.port + "/servo";
-        String payload = "{\"deviceId\":\"" + deviceId + "\",\"command\":\"" + command + "\"}";
+    public void sendServoCommand(String edgeAppIp, UUID iotDeviceId, String command) {
+        String url = this.gatewayUrl + "/servo";
+        String payload = "{\"edgeAppIp\":\"" + edgeAppIp + "\",\"iotDeviceId\":\"" + iotDeviceId + "\",\"command\":\"" + command + "\"}";
         try {
             this.restClient.post()
                     .uri(url)
@@ -33,8 +33,8 @@ public class EdgeGatewayClient {
                     .retrieve()
                     .toBodilessEntity();
         } catch (RestClientException e) {
-            log.error("Failed to send servo command to edge gateway at {}: {}", url, e.getMessage());
-            throw new RuntimeException("Edge gateway unreachable at " + ip, e);
+            log.error("Failed to send servo command via edge gateway at {}: {}", url, e.getMessage());
+            throw new RuntimeException("Edge gateway unreachable at " + this.gatewayUrl, e);
         }
     }
 }
