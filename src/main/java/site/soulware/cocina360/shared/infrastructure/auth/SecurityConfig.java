@@ -1,10 +1,14 @@
 package site.soulware.cocina360.shared.infrastructure.auth;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
 import site.soulware.cocina360.shared.infrastructure.rest.i18n.MessageResolver;
 import site.soulware.cocina360.shared.infrastructure.rest.response.ErrorResponse;
@@ -35,6 +39,15 @@ public class SecurityConfig {
         "/swagger-ui/**",
         "/swagger-ui.html"
     };
+
+    @Bean
+    public JwtDecoder jwtDecoder(
+        @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}") String jwkSetUri
+    ) {
+        return NimbusJwtDecoder.withJwkSetUri(jwkSetUri)
+                .jwsAlgorithm(SignatureAlgorithm.ES256)
+                .build();
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(

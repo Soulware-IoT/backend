@@ -24,7 +24,10 @@ class AuthorizationApiImpl implements AuthorizationApi {
 
     @Override
     public void requirePermission(UUID organizationId, UUID profileId, PermissionArea area, AccessLevel minimum) {
-        if (!this.currentLevel(organizationId, profileId, area).satisfies(minimum)) {
+        AccessLevel level = this.queryService.findLevels(organizationId, profileId)
+                .map(levels -> map(forArea(levels, area)))
+                .orElseThrow(InsufficientPermissionException::new);
+        if (!level.satisfies(minimum)) {
             throw new InsufficientPermissionException();
         }
     }
