@@ -35,6 +35,9 @@ public class EdgeDeviceJpaEntity {
     @Column(name = "api_key", nullable = false)
     private String apiKey;
 
+    @Column
+    private String ip;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -58,6 +61,7 @@ public class EdgeDeviceJpaEntity {
         String name,
         EdgeDeviceStatus status,
         String apiKey,
+        String ip,
         Instant createdAt,
         UUID createdBy,
         Instant updatedAt,
@@ -69,6 +73,7 @@ public class EdgeDeviceJpaEntity {
         this.name = name;
         this.status = status;
         this.apiKey = apiKey;
+        this.ip = ip;
         this.createdAt = createdAt;
         this.createdBy = createdBy;
         this.updatedAt = updatedAt;
@@ -81,6 +86,7 @@ public class EdgeDeviceJpaEntity {
     public String getName() { return this.name; }
     public EdgeDeviceStatus getStatus() { return this.status; }
     public String getApiKey() { return this.apiKey; }
+    public String getIp() { return this.ip; }
     public Instant getCreatedAt() { return this.createdAt; }
     public UUID getCreatedBy() { return this.createdBy; }
     public Instant getUpdatedAt() { return this.updatedAt; }

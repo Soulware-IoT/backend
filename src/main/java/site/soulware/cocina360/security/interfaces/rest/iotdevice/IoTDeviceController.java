@@ -11,13 +11,16 @@ import site.soulware.cocina360.organizations.interfaces.acl.AuthorizationApi;
 import site.soulware.cocina360.organizations.interfaces.acl.OrganizationsApi;
 import site.soulware.cocina360.organizations.interfaces.acl.PermissionArea;
 import site.soulware.cocina360.security.application.edgedevice.EdgeDeviceQueryService;
+import site.soulware.cocina360.security.application.edgedevice.EdgeDeviceResult;
 import site.soulware.cocina360.security.application.iotdevice.IoTDeviceCommandService;
 import site.soulware.cocina360.security.application.iotdevice.IoTDeviceQueryService;
+import site.soulware.cocina360.security.application.iotdevice.IoTDeviceResult;
 import site.soulware.cocina360.security.domain.model.query.GetIoTDeviceQuery;
 import site.soulware.cocina360.security.domain.model.query.GetEdgeDeviceByOrganizationQuery;
 import site.soulware.cocina360.security.domain.model.query.ListDevicesByOrganizationQuery;
 import site.soulware.cocina360.security.domain.model.valueobject.IoTDeviceId;
 import site.soulware.cocina360.security.infrastructure.persistence.authz.DeviceOrganizationQuery;
+import site.soulware.cocina360.security.infrastructure.rest.EdgeGatewayClient;
 import site.soulware.cocina360.security.interfaces.rest.iotdevice.request.ClaimDeviceRequest;
 import site.soulware.cocina360.security.interfaces.rest.iotdevice.request.UpdateIoTDeviceRequest;
 import site.soulware.cocina360.security.interfaces.rest.iotdevice.response.IoTDeviceResponse;
@@ -41,6 +44,7 @@ public class IoTDeviceController {
     private final OrganizationsApi organizationsApi;
     private final AuthorizationApi authorizationApi;
     private final DeviceOrganizationQuery deviceOrganizationQuery;
+    private final EdgeGatewayClient edgeGatewayClient;
 
     public IoTDeviceController(
         IoTDeviceCommandService commandService,
@@ -48,7 +52,8 @@ public class IoTDeviceController {
         EdgeDeviceQueryService edgeDeviceQueryService,
         OrganizationsApi organizationsApi,
         AuthorizationApi authorizationApi,
-        DeviceOrganizationQuery deviceOrganizationQuery
+        DeviceOrganizationQuery deviceOrganizationQuery,
+        EdgeGatewayClient edgeGatewayClient
     ) {
         this.commandService = commandService;
         this.queryService = queryService;
@@ -56,6 +61,7 @@ public class IoTDeviceController {
         this.organizationsApi = organizationsApi;
         this.authorizationApi = authorizationApi;
         this.deviceOrganizationQuery = deviceOrganizationQuery;
+        this.edgeGatewayClient = edgeGatewayClient;
     }
 
     @PostMapping("/organizations/{organizationId}/iot-devices")
@@ -96,6 +102,24 @@ public class IoTDeviceController {
         this.authorizeByDevice(id, requesterId, AccessLevel.ASSIGNEE);
         return ResponseEntity.ok(
                 IoTDeviceResponse.from(this.queryService.handle(new GetIoTDeviceQuery(id))));
+    }
+
+    @PostMapping("/iot-devices/{id}/start-servo")
+    public ResponseEntity<Void> startServo(@PathVariable UUID id) {
+        IoTDeviceResult device = this.queryService.handle(new GetIoTDeviceQuery(id));
+        EdgeDeviceResult edge = this.edgeDeviceQueryService.handle(
+                new GetEdgeDeviceByOrganizationQuery(device.organizationId()));
+        this.edgeGatewayClient.sendServoCommand(edge.ip(), id, "start");
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/iot-devices/{id}/stop-servo")
+    public ResponseEntity<Void> stopServo(@PathVariable UUID id) {
+        IoTDeviceResult device = this.queryService.handle(new GetIoTDeviceQuery(id));
+        EdgeDeviceResult edge = this.edgeDeviceQueryService.handle(
+                new GetEdgeDeviceByOrganizationQuery(device.organizationId()));
+        this.edgeGatewayClient.sendServoCommand(edge.ip(), id, "stop");
+        return ResponseEntity.ok().build();
     }
 
     /**
