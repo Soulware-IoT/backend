@@ -20,6 +20,7 @@ import site.soulware.cocina360.security.domain.model.valueobject.IoTDeviceId;
 import site.soulware.cocina360.security.infrastructure.persistence.authz.DeviceOrganizationQuery;
 import site.soulware.cocina360.security.interfaces.rest.iotdevice.request.ClaimDeviceRequest;
 import site.soulware.cocina360.security.interfaces.rest.iotdevice.request.UpdateIoTDeviceRequest;
+import site.soulware.cocina360.security.interfaces.rest.iotdevice.response.IoTDeviceListResponse;
 import site.soulware.cocina360.security.interfaces.rest.iotdevice.response.IoTDeviceResponse;
 import site.soulware.cocina360.shared.infrastructure.auth.CurrentUser;
 import site.soulware.cocina360.subscriptions.interfaces.acl.SubscriptionsApi;
@@ -80,7 +81,7 @@ public class IoTDeviceController {
     }
 
     @GetMapping("/organizations/{organizationId}/iot-devices")
-    public ResponseEntity<List<IoTDeviceResponse>> listByOrganization(
+    public ResponseEntity<IoTDeviceListResponse> listByOrganization(
         @PathVariable UUID organizationId,
         @CurrentUser UUID requesterId
     ) {
@@ -90,7 +91,9 @@ public class IoTDeviceController {
                 .handle(new ListDevicesByOrganizationQuery(organizationId)).stream()
                 .map(IoTDeviceResponse::from)
                 .toList();
-        return ResponseEntity.ok(devices);
+        long used = this.queryService.countByOrganization(organizationId);
+        int limit = this.subscriptionsApi.deviceQuotaFor(organizationId);
+        return ResponseEntity.ok(new IoTDeviceListResponse(devices, new IoTDeviceListResponse.Quota(used, limit)));
     }
 
     @GetMapping("/iot-devices/{id}")
