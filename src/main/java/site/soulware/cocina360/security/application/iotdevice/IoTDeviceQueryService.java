@@ -12,6 +12,7 @@ import site.soulware.cocina360.security.domain.repository.IoTDeviceRepository;
 import site.soulware.cocina360.shared.domain.model.valueobject.OrganizationId;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Transactional(readOnly = true)
@@ -44,5 +45,9 @@ public class IoTDeviceQueryService {
                 .filter(device -> device.getStatus() == IoTDeviceStatus.ACTIVE)
                 .map(IoTDeviceRegistryEntry::from)
                 .toList();
+    }
+
+    public long countByOrganization(UUID organizationId) {
+        return this.deviceRepository.countByOrganizationId(OrganizationId.of(organizationId));
     }
 }

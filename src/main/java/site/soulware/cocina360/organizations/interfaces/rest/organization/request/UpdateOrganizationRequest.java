@@ -10,13 +10,15 @@ import java.util.UUID;
 public record UpdateOrganizationRequest(
         @NotBlank String name,
         @Schema(description = "Optional. Organization logo/image URL.") String imageUrl,
-        @Schema(description = "Optional. Primary address line.") String addressLineOne,
-        @Schema(description = "Optional. Secondary address line.") String addressLineTwo,
-        @Schema(description = "Optional. Additional location reference.") String addressReference
+        @Schema(description = "Optional. Organization address.") Address address
 ) {
+
+    public record Address(String lineOne, String lineTwo, String reference) {}
+
     public UpdateOrganizationCommand toCommand(UUID organizationId, UUID requesterId) {
-        return new UpdateOrganizationCommand(organizationId, this.name, this.imageUrl,
-                new OrganizationAddress(this.addressLineOne, this.addressLineTwo, this.addressReference),
-                requesterId);
+        OrganizationAddress organizationAddress = this.address != null
+                ? new OrganizationAddress(this.address.lineOne(), this.address.lineTwo(), this.address.reference())
+                : new OrganizationAddress(null, null, null);
+        return new UpdateOrganizationCommand(organizationId, this.name, this.imageUrl, organizationAddress, requesterId);
     }
 }

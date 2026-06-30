@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import site.soulware.cocina360.organizations.domain.model.query.GetOrganizationQuery;
 import site.soulware.cocina360.organizations.interfaces.acl.OrganizationsApi;
 import site.soulware.cocina360.shared.domain.model.valueobject.OrganizationId;
+import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
 
 import java.util.UUID;
 
@@ -19,5 +20,10 @@ class OrganizationsApiImpl implements OrganizationsApi {
     @Override
     public OrganizationId requireOrganizationId(UUID organizationId) {
         return OrganizationId.of(this.queryService.handle(new GetOrganizationQuery(organizationId)).id());
+    }
+
+    @Override
+    public ProfileId requireOwnerProfileId(UUID organizationId) {
+        return ProfileId.of(this.queryService.handle(new GetOrganizationQuery(organizationId)).ownedBy());
     }
 }
