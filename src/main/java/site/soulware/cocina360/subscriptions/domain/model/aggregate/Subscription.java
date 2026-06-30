@@ -9,6 +9,7 @@ import site.soulware.cocina360.subscriptions.domain.model.event.SubscriptionStat
 import site.soulware.cocina360.subscriptions.domain.model.exception.CannotCancelSubscriptionException;
 import site.soulware.cocina360.subscriptions.domain.model.exception.CannotReactivateSubscriptionException;
 import site.soulware.cocina360.subscriptions.domain.model.exception.CannotSuspendSubscriptionException;
+import site.soulware.cocina360.subscriptions.domain.model.exception.SubscriptionPlanUnchangedException;
 import site.soulware.cocina360.subscriptions.domain.model.valueobject.SubscriptionId;
 import site.soulware.cocina360.subscriptions.domain.model.valueobject.SubscriptionPlan;
 import site.soulware.cocina360.subscriptions.domain.model.valueobject.SubscriptionStatus;
@@ -70,6 +71,7 @@ public class Subscription extends AggregateRoot<SubscriptionId> {
     }
 
     public void changePlan(SubscriptionPlan newPlan) {
+        if (this.plan == newPlan) throw new SubscriptionPlanUnchangedException(newPlan);
         SubscriptionPlan previous = this.plan;
         this.plan = newPlan;
         this.updatedAt = Instant.now();

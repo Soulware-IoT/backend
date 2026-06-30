@@ -1,7 +1,6 @@
 package site.soulware.cocina360.subscriptions.interfaces.rest.subscription;
 
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import site.soulware.cocina360.organizations.interfaces.acl.AccessLevel;
@@ -18,7 +17,6 @@ import site.soulware.cocina360.subscriptions.domain.model.command.SuspendSubscri
 import site.soulware.cocina360.subscriptions.domain.model.exception.NotSubscriptionOwnerException;
 import site.soulware.cocina360.subscriptions.domain.model.query.GetSubscriptionByOrganizationQuery;
 import site.soulware.cocina360.subscriptions.interfaces.rest.subscription.request.ChangeSubscriptionPlanRequest;
-import site.soulware.cocina360.subscriptions.interfaces.rest.subscription.request.CreateSubscriptionRequest;
 import site.soulware.cocina360.subscriptions.interfaces.rest.subscription.response.SubscriptionResponse;
 
 import java.util.UUID;
@@ -42,21 +40,6 @@ public class SubscriptionController {
         this.queryService = queryService;
         this.organizationsApi = organizationsApi;
         this.authorizationApi = authorizationApi;
-    }
-
-    @PostMapping
-    public ResponseEntity<SubscriptionResponse> create(
-        @PathVariable UUID organizationId,
-        @RequestBody @Valid CreateSubscriptionRequest request,
-        @CurrentUser UUID requesterId
-    ) {
-        this.organizationsApi.requireOrganizationId(organizationId);
-        this.authorizationApi.requirePermission(organizationId, requesterId, PermissionArea.ORGANIZATIONS, AccessLevel.ADMIN);
-        UUID ownedBy = this.organizationsApi.requireOwnerProfileId(organizationId).value();
-        this.commandService.handle(request.toCommand(organizationId, ownedBy));
-
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(SubscriptionResponse.from(this.queryService.handle(new GetSubscriptionByOrganizationQuery(organizationId))));
     }
 
     @GetMapping
