@@ -219,6 +219,7 @@ The API gateway is now a **pure forwarder** — it no longer validates anything.
 
 **Authentication (Spring Security, OAuth2 Resource Server).** `shared.infrastructure.auth.SecurityConfig` configures the app as a JWT resource server: it verifies the Supabase token's signature (**ES256**, via the project's **JWKS** — `spring.security.oauth2.resourceserver.jwt.jwk-set-uri=${SUPABASE_JWKS_URI}`) and expiry on every request.
 - The `SecurityFilterChain` requires a valid JWT for every request **except** `/edge/**` and `/internal/**` (machine-to-machine, authenticated by `X-Edge-Api-Key`) and the OpenAPI docs — those are `permitAll`.
+- **Provisioning endpoints are environment-gated.** The `/internal/**` provisioning controllers (which mint device/edge `apiKey`s) carry `@ConditionalOnProperty("app.provisioning.enabled")` (default **`false`**, env `PROVISIONING_ENABLED`). Where the flag is off the controllers are not beans, so the routes are never registered (**404 — they do not exist**, not merely hidden). Only the environment/instance that actually provisions devices (e.g. `dev`, or an internal ops instance) sets it `true`. This is the strongest of the layered defenses (Spring not-registered → gateway path denylist → an internal credential); `/edge/**` stays enabled everywhere (devices need it in prod) and is guarded by `X-Edge-Api-Key`.
 - A failed/missing token yields **401** via a custom `AuthenticationEntryPoint` that writes the standard `ErrorResponse` envelope (i18n).
 - The requester's id is the JWT `sub` claim, which **equals the `ProfileId`**. Controllers read it via `@CurrentUser UUID requesterId` (`CurrentUserArgumentResolver`) — this replaces the former `@RequestHeader("X-Requester-Id")` (the gateway no longer extracts it).
 
@@ -289,3 +290,5 @@ public static ControlFormat rehydrate(
 | `DB_PASSWORD` | Supabase DB password |
 | `MONGODB_URI` | `mongodb://<host>:27017/cocina360` (telemetry `Reading` store) |
 | `SUPABASE_JWKS_URI` | `https://<project-ref>.supabase.co/auth/v1/.well-known/jwks.json` (JWT signature verification, ES256) |
+| `PROVISIONING_ENABLED` | `true`/`false` (default `false`) — registers the `/internal/**` device-provisioning endpoints. Enable only where devices are provisioned. |
+| `CORS_ALLOWED_ORIGINS` | CSV of browser origins allowed cross-origin (prod: the deployed frontend only). Dev overrides via `application-dev.properties`. |

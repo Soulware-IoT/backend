@@ -16,4 +16,6 @@ public interface IoTDeviceRepository extends DomainRepository<IoTDevice, IoTDevi
     List<IoTDevice> findByOrganizationId(OrganizationId organizationId);
 
     boolean existsByCode(IoTDeviceCode code);
+
+    long countByOrganizationId(OrganizationId organizationId);
 }

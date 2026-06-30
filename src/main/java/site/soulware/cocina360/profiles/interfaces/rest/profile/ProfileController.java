@@ -5,7 +5,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import site.soulware.cocina360.profiles.application.profile.ProfileCommandService;
 import site.soulware.cocina360.profiles.application.profile.ProfileQueryService;
-import site.soulware.cocina360.profiles.domain.model.query.GetProfileByEmailQuery;
 import site.soulware.cocina360.profiles.domain.model.query.GetProfileQuery;
 import site.soulware.cocina360.profiles.interfaces.rest.profile.request.UpdateProfileDetailsRequest;
 import site.soulware.cocina360.profiles.interfaces.rest.profile.response.ProfileResponse;
@@ -29,13 +28,6 @@ public class ProfileController {
     public ResponseEntity<ProfileResponse> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(
                 ProfileResponse.from(this.queryService.handle(new GetProfileQuery(id)))
-        );
-    }
-
-    @GetMapping
-    public ResponseEntity<ProfileResponse> getByEmail(@RequestParam String email) {
-        return ResponseEntity.ok(
-                ProfileResponse.from(this.queryService.handle(new GetProfileByEmailQuery(email)))
         );
     }
 

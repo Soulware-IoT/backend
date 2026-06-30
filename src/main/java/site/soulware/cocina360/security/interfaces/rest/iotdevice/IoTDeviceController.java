@@ -24,8 +24,10 @@ import site.soulware.cocina360.security.infrastructure.rest.EdgeGatewayClient;
 import site.soulware.cocina360.security.interfaces.rest.iotdevice.request.ClaimDeviceRequest;
 import site.soulware.cocina360.security.interfaces.rest.iotdevice.request.ServoCommandRequest;
 import site.soulware.cocina360.security.interfaces.rest.iotdevice.request.UpdateIoTDeviceRequest;
+import site.soulware.cocina360.security.interfaces.rest.iotdevice.response.IoTDeviceListResponse;
 import site.soulware.cocina360.security.interfaces.rest.iotdevice.response.IoTDeviceResponse;
 import site.soulware.cocina360.shared.infrastructure.auth.CurrentUser;
+import site.soulware.cocina360.subscriptions.interfaces.acl.SubscriptionsApi;
 
 import java.util.List;
 import java.util.UUID;
@@ -44,6 +46,7 @@ public class IoTDeviceController {
     private final EdgeDeviceQueryService edgeDeviceQueryService;
     private final OrganizationsApi organizationsApi;
     private final AuthorizationApi authorizationApi;
+    private final SubscriptionsApi subscriptionsApi;
     private final DeviceOrganizationQuery deviceOrganizationQuery;
     private final EdgeGatewayClient edgeGatewayClient;
 
@@ -54,13 +57,15 @@ public class IoTDeviceController {
         OrganizationsApi organizationsApi,
         AuthorizationApi authorizationApi,
         DeviceOrganizationQuery deviceOrganizationQuery,
-        EdgeGatewayClient edgeGatewayClient
+        EdgeGatewayClient edgeGatewayClient,
+        SubscriptionsApi subscriptionsApi
     ) {
         this.commandService = commandService;
         this.queryService = queryService;
         this.edgeDeviceQueryService = edgeDeviceQueryService;
         this.organizationsApi = organizationsApi;
         this.authorizationApi = authorizationApi;
+        this.subscriptionsApi = subscriptionsApi;
         this.deviceOrganizationQuery = deviceOrganizationQuery;
         this.edgeGatewayClient = edgeGatewayClient;
     }
@@ -73,6 +78,7 @@ public class IoTDeviceController {
     ) {
         this.organizationsApi.requireOrganizationId(organizationId);
         this.authorizationApi.requirePermission(organizationId, requesterId, PermissionArea.SECURITY, AccessLevel.LIEUTENANT);
+        this.subscriptionsApi.enforceDeviceQuota(organizationId, this.queryService.countByOrganization(organizationId));
         this.edgeDeviceQueryService.handle(new GetEdgeDeviceByOrganizationQuery(organizationId));
 
         IoTDeviceId deviceId = this.commandService.handle(request.toCommand(organizationId, requesterId));
@@ -82,7 +88,7 @@ public class IoTDeviceController {
     }
 
     @GetMapping("/organizations/{organizationId}/iot-devices")
-    public ResponseEntity<List<IoTDeviceResponse>> listByOrganization(
+    public ResponseEntity<IoTDeviceListResponse> listByOrganization(
         @PathVariable UUID organizationId,
         @CurrentUser UUID requesterId
     ) {
@@ -92,7 +98,9 @@ public class IoTDeviceController {
                 .handle(new ListDevicesByOrganizationQuery(organizationId)).stream()
                 .map(IoTDeviceResponse::from)
                 .toList();
-        return ResponseEntity.ok(devices);
+        long used = this.queryService.countByOrganization(organizationId);
+        int limit = this.subscriptionsApi.deviceQuotaFor(organizationId);
+        return ResponseEntity.ok(new IoTDeviceListResponse(devices, new IoTDeviceListResponse.Quota(used, limit)));
     }
 
     @GetMapping("/iot-devices/{id}")
