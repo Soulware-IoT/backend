@@ -52,7 +52,8 @@ public class SubscriptionController {
     ) {
         this.organizationsApi.requireOrganizationId(organizationId);
         this.authorizationApi.requirePermission(organizationId, requesterId, PermissionArea.ORGANIZATIONS, AccessLevel.ADMIN);
-        this.commandService.handle(request.toCommand(organizationId, requesterId));
+        UUID ownedBy = this.organizationsApi.requireOwnerProfileId(organizationId).value();
+        this.commandService.handle(request.toCommand(organizationId, ownedBy));
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(SubscriptionResponse.from(this.queryService.handle(new GetSubscriptionByOrganizationQuery(organizationId))));

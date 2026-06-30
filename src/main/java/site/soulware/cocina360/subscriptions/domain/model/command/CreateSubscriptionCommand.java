@@ -6,6 +6,6 @@ import java.util.UUID;
 
 public record CreateSubscriptionCommand(
         UUID organizationId,
-        UUID requesterId,
+        UUID ownedBy,
         SubscriptionPlan plan
 ) {}

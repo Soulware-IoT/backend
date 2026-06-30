@@ -9,7 +9,7 @@ import java.util.UUID;
 public record CreateSubscriptionRequest(
         @NotNull SubscriptionPlan plan
 ) {
-    public CreateSubscriptionCommand toCommand(UUID organizationId, UUID requesterId) {
-        return new CreateSubscriptionCommand(organizationId, requesterId, this.plan);
+    public CreateSubscriptionCommand toCommand(UUID organizationId, UUID ownedBy) {
+        return new CreateSubscriptionCommand(organizationId, ownedBy, this.plan);
     }
 }
