@@ -7,9 +7,10 @@ import site.soulware.cocina360.subscriptions.domain.model.valueobject.Subscripti
 import java.util.UUID;
 
 public record ChangeSubscriptionPlanRequest(
-        @NotNull SubscriptionPlan plan
+        @NotNull SubscriptionPlan plan,
+        String paymentMethodId
 ) {
     public ChangeSubscriptionPlanCommand toCommand(UUID organizationId, UUID requesterId) {
-        return new ChangeSubscriptionPlanCommand(organizationId, requesterId, this.plan);
+        return new ChangeSubscriptionPlanCommand(organizationId, requesterId, this.plan, this.paymentMethodId);
     }
 }

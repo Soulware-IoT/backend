@@ -19,4 +19,8 @@ public enum SubscriptionPlan {
     public boolean isUnlimited() {
         return this.maxIotDevices == -1;
     }
+
+    public boolean isPaid() {
+        return this != FREE;
+    }
 }

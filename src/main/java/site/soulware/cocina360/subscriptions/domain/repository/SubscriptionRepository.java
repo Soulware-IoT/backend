@@ -10,4 +10,6 @@ import java.util.Optional;
 public interface SubscriptionRepository extends DomainRepository<Subscription, SubscriptionId> {
 
     Optional<Subscription> findByOrganizationId(OrganizationId organizationId);
+
+    Optional<Subscription> findByStripeCustomerId(String stripeCustomerId);
 }

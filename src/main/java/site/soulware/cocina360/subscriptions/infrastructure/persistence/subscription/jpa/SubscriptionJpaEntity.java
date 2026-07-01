@@ -6,7 +6,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.ColumnTransformer;
 import site.soulware.cocina360.subscriptions.domain.model.valueobject.SubscriptionPlan;
-import site.soulware.cocina360.subscriptions.domain.model.valueobject.SubscriptionStatus;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -28,15 +27,17 @@ public class SubscriptionJpaEntity {
     @ColumnTransformer(write = "?::subscription_plan")
     private SubscriptionPlan plan;
 
-    @Column(nullable = false)
-    @ColumnTransformer(write = "?::subscription_status")
-    private SubscriptionStatus status;
-
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    @Column(name = "stripe_customer_id")
+    private String stripeCustomerId;
+
+    @Column(name = "stripe_subscription_id")
+    private String stripeSubscriptionId;
 
     protected SubscriptionJpaEntity() {}
 
@@ -45,24 +46,27 @@ public class SubscriptionJpaEntity {
         UUID organizationId,
         UUID ownedBy,
         SubscriptionPlan plan,
-        SubscriptionStatus status,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        String stripeCustomerId,
+        String stripeSubscriptionId
     ) {
         this.id = id;
         this.organizationId = organizationId;
         this.ownedBy = ownedBy;
         this.plan = plan;
-        this.status = status;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.stripeCustomerId = stripeCustomerId;
+        this.stripeSubscriptionId = stripeSubscriptionId;
     }
 
     public UUID getId() { return this.id; }
     public UUID getOrganizationId() { return this.organizationId; }
     public UUID getOwnedBy() { return this.ownedBy; }
     public SubscriptionPlan getPlan() { return this.plan; }
-    public SubscriptionStatus getStatus() { return this.status; }
     public Instant getCreatedAt() { return this.createdAt; }
     public Instant getUpdatedAt() { return this.updatedAt; }
+    public String getStripeCustomerId() { return this.stripeCustomerId; }
+    public String getStripeSubscriptionId() { return this.stripeSubscriptionId; }
 }
