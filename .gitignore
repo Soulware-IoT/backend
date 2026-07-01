@@ -34,3 +34,5 @@ build/
 
 # Script de arranque local con credenciales
 run-local*.sh
+
+error.txt

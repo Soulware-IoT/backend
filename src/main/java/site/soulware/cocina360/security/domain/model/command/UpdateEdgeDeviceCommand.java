@@ -11,5 +11,6 @@ public record UpdateEdgeDeviceCommand(
     UUID edgeDeviceId,
     String name,
     Boolean activate,
-    UUID requesterId
+    UUID requesterId,
+    String ip
 ) {}

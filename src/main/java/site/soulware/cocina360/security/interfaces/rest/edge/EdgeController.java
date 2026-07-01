@@ -8,13 +8,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import site.soulware.cocina360.security.application.edgedevice.EdgeDeviceCommandService;
 import site.soulware.cocina360.security.application.edgedevice.EdgeDeviceQueryService;
 import site.soulware.cocina360.security.application.edgedevice.EdgeDeviceResult;
 import site.soulware.cocina360.security.application.iotdevice.IoTDeviceQueryService;
 import site.soulware.cocina360.security.application.reading.ReadingCommandService;
+import site.soulware.cocina360.security.domain.model.command.UpdateEdgeDeviceCommand;
 import site.soulware.cocina360.security.domain.model.query.AuthenticateEdgeQuery;
 import site.soulware.cocina360.security.domain.model.query.GetDeviceRegistryQuery;
 import site.soulware.cocina360.security.interfaces.rest.edge.request.RecordReadingsRequest;
+import site.soulware.cocina360.security.interfaces.rest.edge.request.RegisterEdgeRequest;
 import site.soulware.cocina360.security.interfaces.rest.edge.response.EdgeIdentityResponse;
 import site.soulware.cocina360.security.interfaces.rest.edge.response.EdgeRegistryResponse;
 
@@ -29,31 +32,39 @@ public class EdgeController {
     public static final String API_KEY_HEADER = "X-Edge-Api-Key";
 
     private final EdgeDeviceQueryService edgeDeviceQueryService;
+    private final EdgeDeviceCommandService edgeDeviceCommandService;
     private final IoTDeviceQueryService iotDeviceQueryService;
     private final ReadingCommandService readingCommandService;
 
     public EdgeController(
         EdgeDeviceQueryService edgeDeviceQueryService,
+        EdgeDeviceCommandService edgeDeviceCommandService,
         IoTDeviceQueryService iotDeviceQueryService,
         ReadingCommandService readingCommandService
     ) {
         this.edgeDeviceQueryService = edgeDeviceQueryService;
+        this.edgeDeviceCommandService = edgeDeviceCommandService;
         this.iotDeviceQueryService = iotDeviceQueryService;
         this.readingCommandService = readingCommandService;
     }
 
     /**
-     * Linkage handshake: authenticate the calling edge by its API key and return its
-     * identity and the organization it is bound to.
+     * Self-registration handshake: authenticate the calling edge by its API key, record
+     * its current IP for command routing, and return its identity and bound organization.
+     * The edge calls this on startup; the IP is stored so the backend can route servo
+     * commands through the edge gateway to this specific edge app instance.
      *
      * @return 200 with the edge identity; 401 if the key is missing or unrecognised.
      */
-    @GetMapping("/me")
+    @PostMapping("/me")
     public ResponseEntity<EdgeIdentityResponse> me(
-        @RequestHeader(name = API_KEY_HEADER, required = false) String apiKey
+        @RequestHeader(name = API_KEY_HEADER, required = false) String apiKey,
+        @RequestBody @Valid RegisterEdgeRequest request
     ) {
-        return ResponseEntity.ok(EdgeIdentityResponse.from(
-                this.edgeDeviceQueryService.handle(new AuthenticateEdgeQuery(apiKey))));
+        EdgeDeviceResult edge = this.edgeDeviceQueryService.handle(new AuthenticateEdgeQuery(apiKey));
+        this.edgeDeviceCommandService.handle(
+                new UpdateEdgeDeviceCommand(edge.edgeDeviceId(), null, null, null, request.ip()));
+        return ResponseEntity.ok(EdgeIdentityResponse.from(edge));
     }
 
     /**
