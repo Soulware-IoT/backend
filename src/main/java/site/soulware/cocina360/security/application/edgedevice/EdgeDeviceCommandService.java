@@ -11,7 +11,6 @@ import site.soulware.cocina360.security.domain.model.exception.OrganizationAlrea
 import site.soulware.cocina360.security.domain.model.valueobject.ApiKey;
 import site.soulware.cocina360.security.domain.model.valueobject.EdgeDeviceCode;
 import site.soulware.cocina360.security.domain.model.valueobject.EdgeDeviceId;
-import site.soulware.cocina360.security.domain.model.valueobject.EdgeDeviceIp;
 import site.soulware.cocina360.security.domain.repository.EdgeDeviceRepository;
 import site.soulware.cocina360.shared.domain.model.valueobject.OrganizationId;
 import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
@@ -78,19 +77,17 @@ public class EdgeDeviceCommandService {
      */
     public void handle(UpdateEdgeDeviceCommand command) {
         EdgeDevice edgeDevice = this.require(command.edgeDeviceId());
+        ProfileId requesterId = ProfileId.of(command.requesterId());
 
         if (command.name() != null) {
-            edgeDevice.rename(command.name(), ProfileId.of(command.requesterId()));
+            edgeDevice.rename(command.name(), requesterId);
         }
         if (command.activate() != null) {
             if (command.activate()) {
-                edgeDevice.activate(ProfileId.of(command.requesterId()));
+                edgeDevice.activate(requesterId);
             } else {
-                edgeDevice.deactivate(ProfileId.of(command.requesterId()));
+                edgeDevice.deactivate(requesterId);
             }
-        }
-        if (command.ip() != null) {
-            edgeDevice.updateIp(EdgeDeviceIp.of(command.ip()));
         }
 
         this.persist(edgeDevice);
