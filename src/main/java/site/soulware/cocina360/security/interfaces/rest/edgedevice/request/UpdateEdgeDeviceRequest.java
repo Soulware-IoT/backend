@@ -24,6 +24,6 @@ public record UpdateEdgeDeviceRequest(
 
     public UpdateEdgeDeviceCommand toCommand(UUID edgeDeviceId, UUID requesterId) {
         Boolean activate = this.status == null ? null : this.status == Activation.ACTIVE;
-        return new UpdateEdgeDeviceCommand(edgeDeviceId, this.name, activate, requesterId, null);
+        return new UpdateEdgeDeviceCommand(edgeDeviceId, this.name, activate, requesterId);
     }
 }
