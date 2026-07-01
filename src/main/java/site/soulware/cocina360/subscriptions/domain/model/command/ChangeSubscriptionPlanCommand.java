@@ -7,5 +7,6 @@ import java.util.UUID;
 public record ChangeSubscriptionPlanCommand(
         UUID organizationId,
         UUID requesterId,
-        SubscriptionPlan plan
+        SubscriptionPlan plan,
+        String paymentMethodId
 ) {}

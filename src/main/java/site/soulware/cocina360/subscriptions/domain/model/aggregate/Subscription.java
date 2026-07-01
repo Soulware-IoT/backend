@@ -5,43 +5,46 @@ import site.soulware.cocina360.shared.domain.model.valueobject.OrganizationId;
 import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
 import site.soulware.cocina360.subscriptions.domain.model.event.SubscriptionCreated;
 import site.soulware.cocina360.subscriptions.domain.model.event.SubscriptionPlanChanged;
-import site.soulware.cocina360.subscriptions.domain.model.event.SubscriptionStatusChanged;
-import site.soulware.cocina360.subscriptions.domain.model.exception.CannotCancelSubscriptionException;
-import site.soulware.cocina360.subscriptions.domain.model.exception.CannotReactivateSubscriptionException;
-import site.soulware.cocina360.subscriptions.domain.model.exception.CannotSuspendSubscriptionException;
 import site.soulware.cocina360.subscriptions.domain.model.exception.SubscriptionPlanUnchangedException;
 import site.soulware.cocina360.subscriptions.domain.model.valueobject.SubscriptionId;
 import site.soulware.cocina360.subscriptions.domain.model.valueobject.SubscriptionPlan;
-import site.soulware.cocina360.subscriptions.domain.model.valueobject.SubscriptionStatus;
 
 import java.time.Instant;
 
+/**
+ * A subscription is permanent and 1:1 with an organization. Its only axis is the {@link SubscriptionPlan}:
+ * an org always has a subscription, on FREE or a paid plan. There is no cancellation or suspension —
+ * leaving a paid plan (voluntarily, or after Stripe exhausts payment retries) is a downgrade to FREE.
+ */
 public class Subscription extends AggregateRoot<SubscriptionId> {
 
     private final SubscriptionId id;
     private final OrganizationId organizationId;
     private final ProfileId ownedBy;
     private SubscriptionPlan plan;
-    private SubscriptionStatus status;
     private final Instant createdAt;
     private Instant updatedAt;
+    private String stripeCustomerId;
+    private String stripeSubscriptionId;
 
     private Subscription(
         SubscriptionId id,
         OrganizationId organizationId,
         ProfileId ownedBy,
         SubscriptionPlan plan,
-        SubscriptionStatus status,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        String stripeCustomerId,
+        String stripeSubscriptionId
     ) {
         this.id = id;
         this.organizationId = organizationId;
         this.ownedBy = ownedBy;
         this.plan = plan;
-        this.status = status;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.stripeCustomerId = stripeCustomerId;
+        this.stripeSubscriptionId = stripeSubscriptionId;
     }
 
     public static Subscription create(
@@ -51,8 +54,7 @@ public class Subscription extends AggregateRoot<SubscriptionId> {
         SubscriptionPlan plan
     ) {
         Instant now = Instant.now();
-        Subscription subscription = new Subscription(
-                id, organizationId, ownedBy, plan, SubscriptionStatus.ACTIVE, now, now);
+        Subscription subscription = new Subscription(id, organizationId, ownedBy, plan, now, now, null, null);
         subscription.registerEvent(new SubscriptionCreated(
                 id.value(), organizationId.value(), ownedBy.value(), plan, now));
         return subscription;
@@ -63,11 +65,14 @@ public class Subscription extends AggregateRoot<SubscriptionId> {
         OrganizationId organizationId,
         ProfileId ownedBy,
         SubscriptionPlan plan,
-        SubscriptionStatus status,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        String stripeCustomerId,
+        String stripeSubscriptionId
     ) {
-        return new Subscription(id, organizationId, ownedBy, plan, status, createdAt, updatedAt);
+        return new Subscription(
+                id, organizationId, ownedBy, plan, createdAt, updatedAt,
+                stripeCustomerId, stripeSubscriptionId);
     }
 
     public void changePlan(SubscriptionPlan newPlan) {
@@ -79,27 +84,16 @@ public class Subscription extends AggregateRoot<SubscriptionId> {
                 this.id.value(), this.organizationId.value(), previous, newPlan, this.updatedAt));
     }
 
-    public void suspend() {
-        if (!this.status.canSuspend()) throw new CannotSuspendSubscriptionException(this.status);
-        this.transition(SubscriptionStatus.SUSPENDED);
-    }
-
-    public void cancel() {
-        if (!this.status.canCancel()) throw new CannotCancelSubscriptionException(this.status);
-        this.transition(SubscriptionStatus.CANCELLED);
-    }
-
-    public void reactivate() {
-        if (!this.status.canReactivate()) throw new CannotReactivateSubscriptionException(this.status);
-        this.transition(SubscriptionStatus.ACTIVE);
-    }
-
-    private void transition(SubscriptionStatus newStatus) {
-        SubscriptionStatus previous = this.status;
-        this.status = newStatus;
+    public void attachBillingIds(String customerId, String subscriptionId) {
+        this.stripeCustomerId = customerId;
+        this.stripeSubscriptionId = subscriptionId;
         this.updatedAt = Instant.now();
-        this.registerEvent(new SubscriptionStatusChanged(
-                this.id.value(), this.organizationId.value(), previous, newStatus, this.updatedAt));
+    }
+
+    public void detachBillingIds() {
+        this.stripeCustomerId = null;
+        this.stripeSubscriptionId = null;
+        this.updatedAt = Instant.now();
     }
 
     @Override
@@ -107,7 +101,8 @@ public class Subscription extends AggregateRoot<SubscriptionId> {
     public OrganizationId getOrganizationId() { return this.organizationId; }
     public ProfileId getOwnedBy() { return this.ownedBy; }
     public SubscriptionPlan getPlan() { return this.plan; }
-    public SubscriptionStatus getStatus() { return this.status; }
     public Instant getCreatedAt() { return this.createdAt; }
     public Instant getUpdatedAt() { return this.updatedAt; }
+    public String getStripeCustomerId() { return this.stripeCustomerId; }
+    public String getStripeSubscriptionId() { return this.stripeSubscriptionId; }
 }
