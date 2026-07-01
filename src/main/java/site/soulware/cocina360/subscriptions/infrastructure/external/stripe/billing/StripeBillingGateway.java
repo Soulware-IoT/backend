@@ -99,9 +99,10 @@ class StripeBillingGateway implements BillingGateway {
         try {
             com.stripe.model.Subscription subscription =
                     com.stripe.model.Subscription.retrieve(stripeSubscriptionId);
-            Instant periodEnd = subscription.getCurrentPeriodEnd() == null
-                    ? null
-                    : Instant.ofEpochSecond(subscription.getCurrentPeriodEnd());
+            // Since Basil (2025-03-31) the billing period lives on the subscription item, not the
+            // subscription root. Our subscriptions carry a single item (one price), so read the first.
+            Long periodEndEpoch = subscription.getItems().getData().getFirst().getCurrentPeriodEnd();
+            Instant periodEnd = periodEndEpoch == null ? null : Instant.ofEpochSecond(periodEndEpoch);
             return new BillingSchedule(periodEnd, Boolean.TRUE.equals(subscription.getCancelAtPeriodEnd()));
         } catch (StripeException e) {
             throw new BillingActivationFailedException(e.getMessage());
