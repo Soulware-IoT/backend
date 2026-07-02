@@ -9,7 +9,6 @@ import site.soulware.cocina360.security.domain.model.exception.EdgeDeviceNotClai
 import site.soulware.cocina360.security.domain.model.valueobject.ApiKey;
 import site.soulware.cocina360.security.domain.model.valueobject.EdgeDeviceCode;
 import site.soulware.cocina360.security.domain.model.valueobject.EdgeDeviceId;
-import site.soulware.cocina360.security.domain.model.valueobject.EdgeDeviceIp;
 import site.soulware.cocina360.security.domain.model.valueobject.EdgeDeviceStatus;
 import site.soulware.cocina360.shared.domain.model.aggregate.AggregateRoot;
 import site.soulware.cocina360.shared.domain.model.valueobject.OrganizationId;
@@ -37,7 +36,6 @@ public class EdgeDevice extends AggregateRoot<EdgeDeviceId> {
     private OrganizationId organizationId;
     private String name;
     private EdgeDeviceStatus status;
-    private EdgeDeviceIp ip;
     private final Instant createdAt;
     private ProfileId createdBy;
     private Instant updatedAt;
@@ -50,7 +48,6 @@ public class EdgeDevice extends AggregateRoot<EdgeDeviceId> {
         OrganizationId organizationId,
         String name,
         EdgeDeviceStatus status,
-        EdgeDeviceIp ip,
         Instant createdAt,
         ProfileId createdBy,
         Instant updatedAt,
@@ -62,7 +59,6 @@ public class EdgeDevice extends AggregateRoot<EdgeDeviceId> {
         this.organizationId = organizationId;
         this.name = name;
         this.status = status;
-        this.ip = ip;
         this.createdAt = createdAt;
         this.createdBy = createdBy;
         this.updatedAt = updatedAt;
@@ -76,7 +72,7 @@ public class EdgeDevice extends AggregateRoot<EdgeDeviceId> {
     public static EdgeDevice provision(EdgeDeviceId id, EdgeDeviceCode code, ApiKey apiKey) {
         Instant now = Instant.now();
         EdgeDevice edgeDevice = new EdgeDevice(id, code, apiKey, null, null,
-                EdgeDeviceStatus.PROVISIONED, null, now, null, now, null);
+                EdgeDeviceStatus.PROVISIONED, now, null, now, null);
         edgeDevice.registerEvent(new EdgeDeviceProvisioned(id.value(), code.value(), now));
         return edgeDevice;
     }
@@ -107,13 +103,12 @@ public class EdgeDevice extends AggregateRoot<EdgeDeviceId> {
         OrganizationId organizationId,
         String name,
         EdgeDeviceStatus status,
-        EdgeDeviceIp ip,
         Instant createdAt,
         ProfileId createdBy,
         Instant updatedAt,
         ProfileId updatedBy
     ) {
-        return new EdgeDevice(id, code, apiKey, organizationId, name, status, ip,
+        return new EdgeDevice(id, code, apiKey, organizationId, name, status,
                 createdAt, createdBy, updatedAt, updatedBy);
     }
 
@@ -158,11 +153,6 @@ public class EdgeDevice extends AggregateRoot<EdgeDeviceId> {
         this.registerEvent(new EdgeDeviceApiKeyRotated(this.id.value(), this.updatedAt));
     }
 
-    /** Records the edge gateway's current IP. Called when the edge self-registers via POST /edge/me. */
-    public void updateIp(EdgeDeviceIp ip) {
-        this.ip = ip;
-    }
-
     /** Management operations are only valid once an edge device has been claimed by an org. */
     private void requireClaimed() {
         if (this.status == EdgeDeviceStatus.PROVISIONED) {
@@ -182,7 +172,6 @@ public class EdgeDevice extends AggregateRoot<EdgeDeviceId> {
     public OrganizationId getOrganizationId() { return this.organizationId; }
     public String getName() { return this.name; }
     public EdgeDeviceStatus getStatus() { return this.status; }
-    public EdgeDeviceIp getIp() { return this.ip; }
     public Instant getCreatedAt() { return this.createdAt; }
     public ProfileId getCreatedBy() { return this.createdBy; }
     public Instant getUpdatedAt() { return this.updatedAt; }

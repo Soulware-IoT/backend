@@ -5,7 +5,6 @@ import site.soulware.cocina360.security.domain.model.aggregate.EdgeDevice;
 import site.soulware.cocina360.security.domain.model.valueobject.ApiKey;
 import site.soulware.cocina360.security.domain.model.valueobject.EdgeDeviceCode;
 import site.soulware.cocina360.security.domain.model.valueobject.EdgeDeviceId;
-import site.soulware.cocina360.security.domain.model.valueobject.EdgeDeviceIp;
 import site.soulware.cocina360.security.domain.repository.EdgeDeviceRepository;
 import site.soulware.cocina360.security.infrastructure.persistence.edgedevice.jpa.EdgeDeviceJpaEntity;
 import site.soulware.cocina360.security.infrastructure.persistence.edgedevice.jpa.EdgeDeviceJpaRepository;
@@ -73,7 +72,6 @@ public class EdgeDeviceRepositoryAdapter implements EdgeDeviceRepository {
                 edgeDevice.getName(),
                 edgeDevice.getStatus(),
                 edgeDevice.getApiKey().value(),
-                edgeDevice.getIp() == null ? null : edgeDevice.getIp().value(),
                 edgeDevice.getCreatedAt(),
                 value(edgeDevice.getCreatedBy()),
                 edgeDevice.getUpdatedAt(),
@@ -89,7 +87,6 @@ public class EdgeDeviceRepositoryAdapter implements EdgeDeviceRepository {
                 entity.getOrganizationId() == null ? null : OrganizationId.of(entity.getOrganizationId()),
                 entity.getName(),
                 entity.getStatus(),
-                entity.getIp() == null ? null : EdgeDeviceIp.of(entity.getIp()),
                 entity.getCreatedAt(),
                 entity.getCreatedBy() == null ? null : ProfileId.of(entity.getCreatedBy()),
                 entity.getUpdatedAt(),

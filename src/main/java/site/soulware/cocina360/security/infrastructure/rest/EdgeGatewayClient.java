@@ -22,9 +22,9 @@ public class EdgeGatewayClient {
         this.gatewayUrl = gatewayUrl;
     }
 
-    public void sendServoCommand(String edgeAppIp, UUID iotDeviceId, String command) {
+    public void sendServoCommand(String edgeCode, UUID iotDeviceId, String command) {
         String url = this.gatewayUrl + "/servo";
-        String payload = "{\"edgeAppIp\":\"" + edgeAppIp + "\",\"iotDeviceId\":\"" + iotDeviceId + "\",\"command\":\"" + command + "\"}";
+        String payload = "{\"edgeCode\":\"" + edgeCode + "\",\"iotDeviceId\":\"" + iotDeviceId + "\",\"command\":\"" + command + "\"}";
         try {
             this.restClient.post()
                     .uri(url)

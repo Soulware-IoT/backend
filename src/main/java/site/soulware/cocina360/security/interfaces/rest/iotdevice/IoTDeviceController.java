@@ -121,7 +121,7 @@ public class IoTDeviceController {
         IoTDeviceResult device = this.queryService.handle(new GetIoTDeviceQuery(id));
         EdgeDeviceResult edge = this.edgeDeviceQueryService.handle(
                 new GetEdgeDeviceByOrganizationQuery(device.organizationId()));
-        this.edgeGatewayClient.sendServoCommand(edge.ip(), id, request.command().name().toLowerCase());
+        this.edgeGatewayClient.sendServoCommand(edge.code(), id, request.command().name().toLowerCase());
         return ResponseEntity.ok().build();
     }
 
