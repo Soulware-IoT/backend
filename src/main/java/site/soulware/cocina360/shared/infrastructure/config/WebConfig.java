@@ -1,5 +1,7 @@
 package site.soulware.cocina360.shared.infrastructure.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,6 +23,8 @@ import java.util.List;
  */
 @Configuration
 public class WebConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(WebConfig.class);
 
     /**
      * Browser origins allowed to call the API cross-origin, resolved <b>per environment</b> from
@@ -58,6 +62,8 @@ public class WebConfig {
         config.setAllowedHeaders(List.of("*"));
         // allow credentialed requests (Authorization header) to cross origins
         config.setAllowCredentials(true);
+
+        log.info("CORS configured with allowed origins: {}", this.allowedOrigins);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
