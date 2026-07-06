@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import site.soulware.cocina360.subscriptions.application.subscription.SubscriptionCommandService;
+import site.soulware.cocina360.subscriptions.domain.model.valueobject.SubscriptionPlan;
+import site.soulware.cocina360.subscriptions.infrastructure.external.stripe.billing.StripePriceResolver;
 import site.soulware.cocina360.subscriptions.infrastructure.external.stripe.webhook.jpa.ProcessedStripeEventJpaEntity;
 import site.soulware.cocina360.subscriptions.infrastructure.external.stripe.webhook.jpa.ProcessedStripeEventJpaRepository;
 
@@ -27,13 +29,16 @@ public class StripeWebhookService {
 
     private final SubscriptionCommandService commandService;
     private final ProcessedStripeEventJpaRepository processedEvents;
+    private final StripePriceResolver priceResolver;
 
     public StripeWebhookService(
         SubscriptionCommandService commandService,
-        ProcessedStripeEventJpaRepository processedEvents
+        ProcessedStripeEventJpaRepository processedEvents,
+        StripePriceResolver priceResolver
     ) {
         this.commandService = commandService;
         this.processedEvents = processedEvents;
+        this.priceResolver = priceResolver;
     }
 
     @Transactional
@@ -52,20 +57,31 @@ public class StripeWebhookService {
     }
 
     private void dispatch(Event event) {
-        // Payment failures are left to Stripe's dunning/retry cycle. Only when Stripe gives up and
-        // deletes the subscription do we drop the org to FREE. A voluntary downgrade is handled
-        // synchronously by the command service, not here.
-        if ("customer.subscription.deleted".equals(event.getType())) {
-            this.commandService.downgradeToFreeByStripeCustomer(this.customerId(event));
+        switch (event.getType()) {
+            // Payment failures are left to Stripe's dunning/retry cycle. Only when Stripe gives up and
+            // deletes the subscription do we drop the org to FREE.
+            case "customer.subscription.deleted" ->
+                    this.commandService.downgradeToFreeByStripeCustomer(this.subscriptionOf(event).getCustomer());
+            // A scheduled paid→paid downgrade advanced its phase at period end → reconcile the local plan
+            // with the price Stripe now bills. Upgrades are applied synchronously, so this is a no-op there.
+            case "customer.subscription.updated" -> this.syncPlan(this.subscriptionOf(event));
+            default -> { /* other event types are not relevant to this service */ }
         }
     }
 
-    private String customerId(Event event) {
+    private void syncPlan(com.stripe.model.Subscription subscription) {
+        String priceId = subscription.getItems().getData().getFirst().getPrice().getId();
+        SubscriptionPlan plan = this.priceResolver.planForPrice(priceId);
+        if (plan == null) return; // unrecognized price — nothing to reconcile
+        this.commandService.syncPlanByStripeCustomer(subscription.getCustomer(), plan);
+    }
+
+    private com.stripe.model.Subscription subscriptionOf(Event event) {
         EventDataObjectDeserializer deserializer = event.getDataObjectDeserializer();
         StripeObject stripeObject = deserializer.getObject()
                 .orElseThrow(() -> new IllegalArgumentException("Unrecognized Stripe event payload"));
 
-        if (stripeObject instanceof com.stripe.model.Subscription subscription) return subscription.getCustomer();
+        if (stripeObject instanceof com.stripe.model.Subscription subscription) return subscription;
 
         throw new IllegalArgumentException("Unsupported Stripe event object: " + stripeObject.getClass());
     }

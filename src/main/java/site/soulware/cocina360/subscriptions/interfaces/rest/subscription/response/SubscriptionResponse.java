@@ -12,7 +12,7 @@ public record SubscriptionResponse(
         UUID ownedBy,
         SubscriptionPlan plan,
         Instant currentPeriodEnd,
-        boolean cancelAtPeriodEnd,
+        SubscriptionPlan pendingPlan,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -23,7 +23,7 @@ public record SubscriptionResponse(
                 result.ownedBy(),
                 result.plan(),
                 result.currentPeriodEnd(),
-                result.cancelAtPeriodEnd(),
+                result.pendingPlan(),
                 result.createdAt(),
                 result.updatedAt()
         );

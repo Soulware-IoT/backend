@@ -21,4 +21,14 @@ class StripePriceResolver {
             case FREE -> throw new IllegalArgumentException("FREE plan has no Stripe price");
         };
     }
+
+    /**
+     * Reverse of {@link #priceIdFor(SubscriptionPlan)} — resolves the paid plan a Stripe price maps to.
+     * Returns {@code null} for an unrecognized price (FREE has no price, so it is never returned here).
+     */
+    public SubscriptionPlan planForPrice(String priceId) {
+        if (this.basicPriceId.equals(priceId)) return SubscriptionPlan.BASIC;
+        if (this.professionalPriceId.equals(priceId)) return SubscriptionPlan.PROFESSIONAL;
+        return null;
+    }
 }
