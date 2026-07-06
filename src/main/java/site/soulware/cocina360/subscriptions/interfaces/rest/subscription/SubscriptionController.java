@@ -15,9 +15,12 @@ import site.soulware.cocina360.subscriptions.domain.model.command.DowngradeSubsc
 import site.soulware.cocina360.subscriptions.domain.model.command.ResumeSubscriptionCommand;
 import site.soulware.cocina360.subscriptions.domain.model.exception.NotSubscriptionOwnerException;
 import site.soulware.cocina360.subscriptions.domain.model.query.GetSubscriptionByOrganizationQuery;
+import site.soulware.cocina360.subscriptions.domain.model.query.GetSubscriptionInvoicesQuery;
 import site.soulware.cocina360.subscriptions.interfaces.rest.subscription.request.ChangeSubscriptionPlanRequest;
+import site.soulware.cocina360.subscriptions.interfaces.rest.subscription.response.InvoiceResponse;
 import site.soulware.cocina360.subscriptions.interfaces.rest.subscription.response.SubscriptionResponse;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -90,6 +93,18 @@ public class SubscriptionController {
 
         return ResponseEntity.ok(
                 SubscriptionResponse.from(this.queryService.handleWithBilling(new GetSubscriptionByOrganizationQuery(organizationId))));
+    }
+
+    /** Owner-only: invoices expose billed amounts, so gate them like the billing mutations. */
+    @GetMapping("/invoices")
+    public ResponseEntity<List<InvoiceResponse>> listInvoices(
+        @PathVariable UUID organizationId,
+        @CurrentUser UUID requesterId
+    ) {
+        this.requireOwner(organizationId, requesterId);
+
+        return ResponseEntity.ok(
+                InvoiceResponse.fromAll(this.queryService.listInvoices(new GetSubscriptionInvoicesQuery(organizationId))));
     }
 
     private void requireOwner(UUID organizationId, UUID requesterId) {
