@@ -12,7 +12,7 @@ public record SubscriptionResult(
         UUID ownedBy,
         SubscriptionPlan plan,
         Instant currentPeriodEnd,
-        boolean cancelAtPeriodEnd,
+        SubscriptionPlan pendingPlan,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -29,7 +29,7 @@ public record SubscriptionResult(
                 subscription.getOwnedBy().value(),
                 subscription.getPlan(),
                 schedule.currentPeriodEnd(),
-                schedule.cancelAtPeriodEnd(),
+                schedule.pendingPlan(),
                 subscription.getCreatedAt(),
                 subscription.getUpdatedAt()
         );
