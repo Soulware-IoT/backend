@@ -2,18 +2,22 @@ package site.soulware.cocina360.subscriptions.infrastructure.external.stripe.bil
 
 import com.stripe.exception.StripeException;
 import com.stripe.model.Customer;
+import com.stripe.model.Invoice;
 import com.stripe.model.PaymentMethod;
 import com.stripe.param.CustomerCreateParams;
 import com.stripe.param.CustomerUpdateParams;
+import com.stripe.param.InvoiceListParams;
 import com.stripe.param.PaymentMethodAttachParams;
 import com.stripe.param.SubscriptionCreateParams;
 import com.stripe.param.SubscriptionUpdateParams;
 import org.springframework.stereotype.Service;
 import site.soulware.cocina360.subscriptions.application.subscription.BillingGateway;
 import site.soulware.cocina360.subscriptions.domain.model.exception.BillingActivationFailedException;
+import site.soulware.cocina360.subscriptions.domain.model.exception.InvoiceRetrievalFailedException;
 import site.soulware.cocina360.subscriptions.domain.model.valueobject.SubscriptionPlan;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -107,5 +111,34 @@ class StripeBillingGateway implements BillingGateway {
         } catch (StripeException e) {
             throw new BillingActivationFailedException(e.getMessage());
         }
+    }
+
+    @Override
+    public List<InvoiceView> listInvoices(String stripeCustomerId) {
+        try {
+            return Invoice.list(InvoiceListParams.builder()
+                            .setCustomer(stripeCustomerId)
+                            .setLimit(24L)
+                            .build())
+                    .getData().stream()
+                    .map(StripeBillingGateway::toInvoiceView)
+                    .toList();
+        } catch (StripeException e) {
+            throw new InvoiceRetrievalFailedException(e.getMessage());
+        }
+    }
+
+    private static InvoiceView toInvoiceView(Invoice invoice) {
+        Long createdEpoch = invoice.getCreated();
+        Instant createdAt = createdEpoch == null ? null : Instant.ofEpochSecond(createdEpoch);
+        long amountPaid = invoice.getAmountPaid() == null ? 0L : invoice.getAmountPaid();
+        return new InvoiceView(
+                invoice.getNumber(),
+                invoice.getStatus(),
+                amountPaid,
+                invoice.getCurrency(),
+                createdAt,
+                invoice.getHostedInvoiceUrl(),
+                invoice.getInvoicePdf());
     }
 }

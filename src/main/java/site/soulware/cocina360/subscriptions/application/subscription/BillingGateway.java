@@ -3,6 +3,7 @@ package site.soulware.cocina360.subscriptions.application.subscription;
 import site.soulware.cocina360.subscriptions.domain.model.valueobject.SubscriptionPlan;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -30,7 +31,24 @@ public interface BillingGateway {
     /** Reads the subscription's live billing schedule from Stripe (period end + pending cancellation). */
     BillingSchedule fetchSchedule(String stripeSubscriptionId);
 
+    /** Reads the customer's invoice history from Stripe (most recent first). */
+    List<InvoiceView> listInvoices(String stripeCustomerId);
+
     record BillingIds(String customerId, String subscriptionId) {}
+
+    /**
+     * A single Stripe invoice, flattened for read-only display. {@code amountPaid} is in the currency's
+     * minor units (e.g. cents). {@code hostedInvoiceUrl}/{@code invoicePdfUrl} may be null for draft invoices.
+     */
+    record InvoiceView(
+            String number,
+            String status,
+            long amountPaid,
+            String currency,
+            Instant createdAt,
+            String hostedInvoiceUrl,
+            String invoicePdfUrl
+    ) {}
 
     /**
      * When the current paid period ends and whether the subscription is set to drop to FREE at that
