@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import site.soulware.cocina360.security.domain.model.event.ReadingRecorded;
 import site.soulware.cocina360.security.interfaces.rest.reading.response.ReadingStreamResponse;
+import site.soulware.cocina360.security.interfaces.rest.sse.OrganizationSseHub;
 
 /**
  * Fans a {@link ReadingRecorded} out to the organization's live SSE subscribers after
@@ -23,10 +24,10 @@ class ReadingStreamListener {
 
     private static final String READING_EVENT = "reading";
 
-    private final ReadingSseRegistry registry;
+    private final OrganizationSseHub hub;
 
-    ReadingStreamListener(ReadingSseRegistry registry) {
-        this.registry = registry;
+    ReadingStreamListener(OrganizationSseHub hub) {
+        this.hub = hub;
     }
 
     @ApplicationModuleListener
@@ -39,7 +40,10 @@ class ReadingStreamListener {
                 event.temperatureC(),
                 event.gasPpm(),
                 event.severity());
-        this.registry.broadcast(
-                event.organizationId(), READING_EVENT, ReadingStreamResponse.from(event));
+        this.hub.broadcast(
+                event.organizationId(),
+                ReadingStreamController.TOPIC,
+                READING_EVENT,
+                ReadingStreamResponse.from(event));
     }
 }

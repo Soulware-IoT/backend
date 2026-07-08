@@ -1,4 +1,4 @@
-package site.soulware.cocina360.security.interfaces.rest.reading;
+package site.soulware.cocina360.security.interfaces.rest.presence;
 
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,22 +17,23 @@ import site.soulware.cocina360.shared.infrastructure.auth.CurrentUser;
 import java.util.UUID;
 
 /**
- * Live telemetry stream: pushes every reading recorded for the organization's devices
- * to the connected client as Server-Sent Events (event name {@code reading}; each
- * payload carries its {@code deviceId} so clients filter per device). The connection
- * stays open indefinitely, kept alive by heartbeat comments.
+ * Live presence stream: pushes every online/offline transition among the organization's
+ * edge and IoT devices as Server-Sent Events (event name {@code presence}). Independent
+ * of the readings stream — a client may subscribe to either, both, or neither. The
+ * connection stays open indefinitely, kept alive by heartbeat comments.
+ *
+ * <p>Only carries future transitions; fetch {@link DevicePresenceController} once on
+ * load for the current snapshot.
  */
-@Tag(name = "reading-stream-controller")
+@Tag(name = "device-presence-stream-controller")
 @RestController
-public class ReadingStreamController {
-
-    static final String TOPIC = "readings";
+public class DevicePresenceStreamController {
 
     private final OrganizationsApi organizationsApi;
     private final AuthorizationApi authorizationApi;
     private final OrganizationSseHub hub;
 
-    public ReadingStreamController(
+    public DevicePresenceStreamController(
         OrganizationsApi organizationsApi,
         AuthorizationApi authorizationApi,
         OrganizationSseHub hub
@@ -43,7 +44,7 @@ public class ReadingStreamController {
     }
 
     @GetMapping(
-        value = "/organizations/{organizationId}/readings/stream",
+        value = "/organizations/{organizationId}/devices/presence/stream",
         produces = MediaType.TEXT_EVENT_STREAM_VALUE
     )
     public SseEmitter stream(
@@ -53,6 +54,6 @@ public class ReadingStreamController {
         this.organizationsApi.requireOrganizationId(organizationId);
         this.authorizationApi.requirePermission(
                 organizationId, requesterId, PermissionArea.SECURITY, AccessLevel.ASSIGNEE);
-        return this.hub.subscribe(organizationId, TOPIC);
+        return this.hub.subscribe(organizationId, DevicePresenceRegistry.TOPIC);
     }
 }
