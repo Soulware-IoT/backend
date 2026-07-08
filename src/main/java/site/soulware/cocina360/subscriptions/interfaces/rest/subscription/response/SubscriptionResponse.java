@@ -2,7 +2,6 @@ package site.soulware.cocina360.subscriptions.interfaces.rest.subscription.respo
 
 import site.soulware.cocina360.subscriptions.application.subscription.SubscriptionResult;
 import site.soulware.cocina360.subscriptions.domain.model.valueobject.SubscriptionPlan;
-import site.soulware.cocina360.subscriptions.domain.model.valueobject.SubscriptionStatus;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -12,7 +11,8 @@ public record SubscriptionResponse(
         UUID organizationId,
         UUID ownedBy,
         SubscriptionPlan plan,
-        SubscriptionStatus status,
+        Instant currentPeriodEnd,
+        SubscriptionPlan pendingPlan,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -22,7 +22,8 @@ public record SubscriptionResponse(
                 result.organizationId(),
                 result.ownedBy(),
                 result.plan(),
-                result.status(),
+                result.currentPeriodEnd(),
+                result.pendingPlan(),
                 result.createdAt(),
                 result.updatedAt()
         );

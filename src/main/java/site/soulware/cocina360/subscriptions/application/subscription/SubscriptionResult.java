@@ -2,7 +2,6 @@ package site.soulware.cocina360.subscriptions.application.subscription;
 
 import site.soulware.cocina360.subscriptions.domain.model.aggregate.Subscription;
 import site.soulware.cocina360.subscriptions.domain.model.valueobject.SubscriptionPlan;
-import site.soulware.cocina360.subscriptions.domain.model.valueobject.SubscriptionStatus;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -12,17 +11,25 @@ public record SubscriptionResult(
         UUID organizationId,
         UUID ownedBy,
         SubscriptionPlan plan,
-        SubscriptionStatus status,
+        Instant currentPeriodEnd,
+        SubscriptionPlan pendingPlan,
         Instant createdAt,
         Instant updatedAt
 ) {
+    /** Plain view (no billing schedule) — for internal reads that must not call Stripe. */
     public static SubscriptionResult from(Subscription subscription) {
+        return from(subscription, BillingGateway.BillingSchedule.none());
+    }
+
+    /** Billing-enriched view — {@code schedule} is fetched live from Stripe by the query service. */
+    public static SubscriptionResult from(Subscription subscription, BillingGateway.BillingSchedule schedule) {
         return new SubscriptionResult(
                 subscription.getId().value(),
                 subscription.getOrganizationId().value(),
                 subscription.getOwnedBy().value(),
                 subscription.getPlan(),
-                subscription.getStatus(),
+                schedule.currentPeriodEnd(),
+                schedule.pendingPlan(),
                 subscription.getCreatedAt(),
                 subscription.getUpdatedAt()
         );

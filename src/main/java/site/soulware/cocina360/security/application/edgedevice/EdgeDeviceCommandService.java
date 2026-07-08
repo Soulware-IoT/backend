@@ -77,17 +77,19 @@ public class EdgeDeviceCommandService {
      */
     public void handle(UpdateEdgeDeviceCommand command) {
         EdgeDevice edgeDevice = this.require(command.edgeDeviceId());
+        ProfileId requesterId = ProfileId.of(command.requesterId());
 
         if (command.name() != null) {
-            edgeDevice.rename(command.name(), ProfileId.of(command.requesterId()));
+            edgeDevice.rename(command.name(), requesterId);
         }
         if (command.activate() != null) {
             if (command.activate()) {
-                edgeDevice.activate(ProfileId.of(command.requesterId()));
+                edgeDevice.activate(requesterId);
             } else {
-                edgeDevice.deactivate(ProfileId.of(command.requesterId()));
+                edgeDevice.deactivate(requesterId);
             }
         }
+
         this.persist(edgeDevice);
     }
 

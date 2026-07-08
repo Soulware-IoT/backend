@@ -2,6 +2,7 @@ package site.soulware.cocina360.organizations.interfaces.rest.organization.respo
 
 import site.soulware.cocina360.organizations.application.organization.OrganizationResult;
 import site.soulware.cocina360.organizations.domain.model.valueobject.OrganizationAddress;
+import site.soulware.cocina360.profiles.interfaces.acl.ProfileSummary;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -12,6 +13,7 @@ public record OrganizationResponse(
         String imageUrl,
         Address address,
         UUID ownedBy,
+        ProfileSummary owner,
         Instant createdAt
 ) {
     public record Address(
@@ -27,6 +29,6 @@ public record OrganizationResponse(
     public static OrganizationResponse from(OrganizationResult result) {
         return new OrganizationResponse(result.id(), result.name(), result.imageUrl(),
                 Address.from(result.address()),
-                result.ownedBy(), result.createdAt());
+                result.ownedBy(), result.owner(), result.createdAt());
     }
 }

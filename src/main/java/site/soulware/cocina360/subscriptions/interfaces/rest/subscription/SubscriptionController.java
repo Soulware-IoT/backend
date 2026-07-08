@@ -11,14 +11,16 @@ import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
 import site.soulware.cocina360.shared.infrastructure.auth.CurrentUser;
 import site.soulware.cocina360.subscriptions.application.subscription.SubscriptionCommandService;
 import site.soulware.cocina360.subscriptions.application.subscription.SubscriptionQueryService;
-import site.soulware.cocina360.subscriptions.domain.model.command.CancelSubscriptionCommand;
-import site.soulware.cocina360.subscriptions.domain.model.command.ReactivateSubscriptionCommand;
-import site.soulware.cocina360.subscriptions.domain.model.command.SuspendSubscriptionCommand;
+import site.soulware.cocina360.subscriptions.domain.model.command.DowngradeSubscriptionCommand;
+import site.soulware.cocina360.subscriptions.domain.model.command.ResumeSubscriptionCommand;
 import site.soulware.cocina360.subscriptions.domain.model.exception.NotSubscriptionOwnerException;
 import site.soulware.cocina360.subscriptions.domain.model.query.GetSubscriptionByOrganizationQuery;
+import site.soulware.cocina360.subscriptions.domain.model.query.GetSubscriptionInvoicesQuery;
 import site.soulware.cocina360.subscriptions.interfaces.rest.subscription.request.ChangeSubscriptionPlanRequest;
+import site.soulware.cocina360.subscriptions.interfaces.rest.subscription.response.InvoiceResponse;
 import site.soulware.cocina360.subscriptions.interfaces.rest.subscription.response.SubscriptionResponse;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -51,7 +53,7 @@ public class SubscriptionController {
         this.authorizationApi.requirePermission(organizationId, requesterId, PermissionArea.ORGANIZATIONS, AccessLevel.LIEUTENANT);
 
         return ResponseEntity.ok(
-                SubscriptionResponse.from(this.queryService.handle(new GetSubscriptionByOrganizationQuery(organizationId))));
+                SubscriptionResponse.from(this.queryService.handleWithBilling(new GetSubscriptionByOrganizationQuery(organizationId))));
     }
 
     @PostMapping("/plan")
@@ -64,43 +66,45 @@ public class SubscriptionController {
         this.commandService.handle(request.toCommand(organizationId, requesterId));
 
         return ResponseEntity.ok(
-                SubscriptionResponse.from(this.queryService.handle(new GetSubscriptionByOrganizationQuery(organizationId))));
+                SubscriptionResponse.from(this.queryService.handleWithBilling(new GetSubscriptionByOrganizationQuery(organizationId))));
     }
 
-    @PostMapping("/suspend")
-    public ResponseEntity<SubscriptionResponse> suspend(
+    /** Schedules a downgrade to FREE at the end of the current paid period (Stripe cancel_at_period_end). */
+    @PostMapping("/downgrade")
+    public ResponseEntity<SubscriptionResponse> downgrade(
         @PathVariable UUID organizationId,
         @CurrentUser UUID requesterId
     ) {
         this.requireOwner(organizationId, requesterId);
-        this.commandService.handle(new SuspendSubscriptionCommand(organizationId, requesterId));
+        this.commandService.handle(new DowngradeSubscriptionCommand(organizationId, requesterId));
 
         return ResponseEntity.ok(
-                SubscriptionResponse.from(this.queryService.handle(new GetSubscriptionByOrganizationQuery(organizationId))));
+                SubscriptionResponse.from(this.queryService.handleWithBilling(new GetSubscriptionByOrganizationQuery(organizationId))));
     }
 
-    @PostMapping("/cancel")
-    public ResponseEntity<SubscriptionResponse> cancel(
+    /** Cancels a pending end-of-period downgrade — the subscription keeps renewing. */
+    @PostMapping("/resume")
+    public ResponseEntity<SubscriptionResponse> resume(
         @PathVariable UUID organizationId,
         @CurrentUser UUID requesterId
     ) {
         this.requireOwner(organizationId, requesterId);
-        this.commandService.handle(new CancelSubscriptionCommand(organizationId, requesterId));
+        this.commandService.handle(new ResumeSubscriptionCommand(organizationId, requesterId));
 
         return ResponseEntity.ok(
-                SubscriptionResponse.from(this.queryService.handle(new GetSubscriptionByOrganizationQuery(organizationId))));
+                SubscriptionResponse.from(this.queryService.handleWithBilling(new GetSubscriptionByOrganizationQuery(organizationId))));
     }
 
-    @PostMapping("/reactivate")
-    public ResponseEntity<SubscriptionResponse> reactivate(
+    /** Owner-only: invoices expose billed amounts, so gate them like the billing mutations. */
+    @GetMapping("/invoices")
+    public ResponseEntity<List<InvoiceResponse>> listInvoices(
         @PathVariable UUID organizationId,
         @CurrentUser UUID requesterId
     ) {
         this.requireOwner(organizationId, requesterId);
-        this.commandService.handle(new ReactivateSubscriptionCommand(organizationId, requesterId));
 
         return ResponseEntity.ok(
-                SubscriptionResponse.from(this.queryService.handle(new GetSubscriptionByOrganizationQuery(organizationId))));
+                InvoiceResponse.fromAll(this.queryService.listInvoices(new GetSubscriptionInvoicesQuery(organizationId))));
     }
 
     private void requireOwner(UUID organizationId, UUID requesterId) {

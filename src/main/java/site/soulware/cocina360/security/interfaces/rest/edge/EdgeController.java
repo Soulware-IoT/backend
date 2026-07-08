@@ -43,8 +43,8 @@ public class EdgeController {
     }
 
     /**
-     * Identity handshake: authenticate the calling edge by its API key and return its
-     * identity and bound organization. The edge calls this on startup to confirm linkage.
+     * Linkage handshake: authenticate the calling edge by its API key and return its
+     * identity and the organization it is bound to.
      *
      * @return 200 with the edge identity; 401 if the key is missing or unrecognised.
      */
@@ -52,8 +52,8 @@ public class EdgeController {
     public ResponseEntity<EdgeIdentityResponse> me(
         @RequestHeader(name = API_KEY_HEADER, required = false) String apiKey
     ) {
-        EdgeDeviceResult edge = this.edgeDeviceQueryService.handle(new AuthenticateEdgeQuery(apiKey));
-        return ResponseEntity.ok(EdgeIdentityResponse.from(edge));
+        return ResponseEntity.ok(EdgeIdentityResponse.from(
+                this.edgeDeviceQueryService.handle(new AuthenticateEdgeQuery(apiKey))));
     }
 
     /**

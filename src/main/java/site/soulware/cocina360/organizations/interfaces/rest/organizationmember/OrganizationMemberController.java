@@ -8,6 +8,7 @@ import site.soulware.cocina360.organizations.application.organizationmember.Orga
 import site.soulware.cocina360.organizations.application.organization.OrganizationQueryService;
 import site.soulware.cocina360.organizations.domain.model.command.RemoveOrganizationMemberCommand;
 import site.soulware.cocina360.organizations.domain.model.query.GetOrganizationMemberQuery;
+import site.soulware.cocina360.organizations.domain.model.query.GetOrganizationMembershipQuery;
 import site.soulware.cocina360.organizations.domain.model.query.GetOrganizationQuery;
 import site.soulware.cocina360.organizations.domain.model.query.ListOrganizationMembersQuery;
 import site.soulware.cocina360.organizations.interfaces.acl.AccessLevel;
@@ -51,6 +52,17 @@ public class OrganizationMemberController {
         return ResponseEntity.ok(
                 this.queryService.handle(new ListOrganizationMembersQuery(organizationId))
                         .stream().map(OrganizationMemberResponse::from).toList());
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<OrganizationMemberResponse> getMine(
+        @PathVariable UUID organizationId,
+        @CurrentUser UUID requesterId
+    ) {
+        this.requireOrganization(organizationId);
+        return ResponseEntity.ok(
+                OrganizationMemberResponse.from(
+                        this.queryService.handle(new GetOrganizationMembershipQuery(organizationId, requesterId))));
     }
 
     @GetMapping("/{memberId}")

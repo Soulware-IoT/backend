@@ -37,6 +37,11 @@ public class SubscriptionRepositoryAdapter implements SubscriptionRepository {
     }
 
     @Override
+    public Optional<Subscription> findByStripeCustomerId(String stripeCustomerId) {
+        return this.jpaRepository.findByStripeCustomerId(stripeCustomerId).map(this::toDomain);
+    }
+
+    @Override
     public void delete(Subscription aggregate) {
         this.jpaRepository.deleteById(aggregate.getId().value());
     }
@@ -47,9 +52,10 @@ public class SubscriptionRepositoryAdapter implements SubscriptionRepository {
                 subscription.getOrganizationId().value(),
                 subscription.getOwnedBy().value(),
                 subscription.getPlan(),
-                subscription.getStatus(),
                 subscription.getCreatedAt(),
-                subscription.getUpdatedAt()
+                subscription.getUpdatedAt(),
+                subscription.getStripeCustomerId(),
+                subscription.getStripeSubscriptionId()
         );
     }
 
@@ -59,9 +65,10 @@ public class SubscriptionRepositoryAdapter implements SubscriptionRepository {
                 OrganizationId.of(entity.getOrganizationId()),
                 ProfileId.of(entity.getOwnedBy()),
                 entity.getPlan(),
-                entity.getStatus(),
                 entity.getCreatedAt(),
-                entity.getUpdatedAt()
+                entity.getUpdatedAt(),
+                entity.getStripeCustomerId(),
+                entity.getStripeSubscriptionId()
         );
     }
 }
