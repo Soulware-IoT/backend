@@ -17,15 +17,17 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * In-memory, ephemeral tracker of device reachability. Neither the edge nor its IoT
- * devices send an explicit heartbeat — the edge-facing controller treats each
- * authenticated edge request as an implicit one via {@link #touch}. A device is
- * considered {@code ONLINE} until it goes quiet for longer than {@link #TTL}, at which
- * point the scheduled {@link #sweep()} flips it to {@code OFFLINE}.
+ * In-memory, ephemeral tracker of device reachability. Nothing sends an explicit
+ * heartbeat — liveness is derived from traffic that already flows: each authenticated
+ * edge request marks the <i>edge</i> seen ({@code EdgeController}), and each forwarded
+ * reading marks its <i>IoT device</i> seen ({@code ReadingPresenceListener}), both via
+ * {@link #touch}. A device is considered {@code ONLINE} until it goes quiet for longer
+ * than {@link #TTL}, at which point the scheduled {@link #sweep()} flips it to
+ * {@code OFFLINE}.
  *
- * <p>Only transitions are broadcast (mirrors the sparse reading ledger: repeated
- * touches of an already-{@code ONLINE} device are not newsworthy), via
- * {@link OrganizationSseHub} on the {@link #TOPIC} topic.
+ * <p>Only transitions are broadcast (repeated touches of an already-{@code ONLINE}
+ * device are not newsworthy), via {@link OrganizationSseHub} on the {@link #TOPIC}
+ * topic.
  *
  * <p>This is deliberately not persisted domain state — it is recomputed entirely from
  * live traffic and reset on restart, so it lives in the interfaces layer rather than

@@ -8,11 +8,13 @@ import java.util.UUID;
 
 /**
  * Payload of a {@code reading} SSE event pushed to an organization's stream
- * subscribers. Carries the {@code deviceId} so clients can filter per device.
+ * subscribers. Carries the {@code deviceId} and {@code deviceCode} so clients can
+ * filter and label per device.
  */
 public record ReadingStreamResponse(
     UUID id,
     UUID deviceId,
+    String deviceCode,
     int temperatureC,
     double gasPpm,
     SafetySeverity severity,
@@ -24,6 +26,7 @@ public record ReadingStreamResponse(
         return new ReadingStreamResponse(
                 event.readingId(),
                 event.deviceId(),
+                event.deviceCode(),
                 event.temperatureC(),
                 event.gasPpm(),
                 event.severity(),

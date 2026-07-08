@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RestController;
 import site.soulware.cocina360.security.application.edgedevice.EdgeDeviceQueryService;
 import site.soulware.cocina360.security.application.edgedevice.EdgeDeviceResult;
 import site.soulware.cocina360.security.application.iotdevice.IoTDeviceQueryService;
-import site.soulware.cocina360.security.application.iotdevice.IoTDeviceRegistryEntry;
 import site.soulware.cocina360.security.application.reading.ReadingCommandService;
 import site.soulware.cocina360.security.domain.model.query.AuthenticateEdgeQuery;
 import site.soulware.cocina360.security.domain.model.query.GetDeviceRegistryQuery;
@@ -20,8 +19,6 @@ import site.soulware.cocina360.security.interfaces.rest.edge.response.EdgeIdenti
 import site.soulware.cocina360.security.interfaces.rest.edge.response.EdgeRegistryResponse;
 import site.soulware.cocina360.security.interfaces.rest.presence.DeviceKind;
 import site.soulware.cocina360.security.interfaces.rest.presence.DevicePresenceRegistry;
-
-import java.util.List;
 
 /**
  * Edge-facing API: endpoints the edge device calls on behalf of the edge application,
@@ -70,8 +67,10 @@ public class EdgeController {
      * of its organization (with each device's apiKey and thresholds) for local replication.
      * The edge polls this to stay in sync; an unknown key yields 401 before any data.
      *
-     * <p>Doubles as the liveness signal for the edge and every device it just confirmed
-     * it manages — the edge has no dedicated heartbeat, so this periodic pull is it.
+     * <p>Doubles as the liveness signal for the <b>edge only</b> — the registry lists
+     * devices by claim status, not physical reachability, so it says nothing about
+     * whether a device is actually powered on. Per-device liveness is derived from the
+     * readings each device forwards (see {@code ReadingPresenceListener}).
      *
      * @return 200 with the org's device registry; 401 if the key is missing or unrecognised.
      */
@@ -81,11 +80,9 @@ public class EdgeController {
     ) {
         EdgeDeviceResult edge = this.edgeDeviceQueryService.handle(new AuthenticateEdgeQuery(apiKey));
         this.touchEdge(edge);
-        List<IoTDeviceRegistryEntry> devices =
-                this.iotDeviceQueryService.handle(new GetDeviceRegistryQuery(edge.organizationId()));
-        devices.forEach(device -> this.presenceRegistry.touch(
-                edge.organizationId(), device.deviceId(), device.code(), DeviceKind.IOT));
-        return ResponseEntity.ok(EdgeRegistryResponse.of(edge.organizationId(), devices));
+        return ResponseEntity.ok(EdgeRegistryResponse.of(
+                edge.organizationId(),
+                this.iotDeviceQueryService.handle(new GetDeviceRegistryQuery(edge.organizationId()))));
     }
 
     /**

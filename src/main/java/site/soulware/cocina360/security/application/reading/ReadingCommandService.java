@@ -51,6 +51,7 @@ public class ReadingCommandService {
                     ReadingId.generate(),
                     device.getOrganizationId(),
                     device.getId(),
+                    device.getCode(),
                     entry.temperatureC(),
                     entry.gasPpm(),
                     entry.severity(),
