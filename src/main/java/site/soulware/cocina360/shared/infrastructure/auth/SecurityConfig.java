@@ -78,7 +78,7 @@ public class SecurityConfig {
             .csrf(SecurityConfig::disableCsrf)
             .sessionManagement(SecurityConfig::useStatelessSessions)
             .authorizeHttpRequests(SecurityConfig::permitPublicPathsAuthenticateRest)
-            .oauth2ResourceServer(SecurityConfig::enableJwtResourceServer)
+            .oauth2ResourceServer(this::enableJwtResourceServer)
             .exceptionHandling(this::writeErrorEnvelopeOnAuthFailures);
 
         return http.build();
@@ -100,8 +100,15 @@ public class SecurityConfig {
             .anyRequest().authenticated();
     }
 
-    private static void enableJwtResourceServer(OAuth2ResourceServerConfigurer<HttpSecurity> oauth2) {
-        oauth2.jwt(Customizer.withDefaults());
+    /**
+     * The bearer-token filter handles invalid/expired-token failures with its own entry
+     * point, bypassing {@code exceptionHandling}; routing it to {@code respondUnauthenticated}
+     * keeps every 401 (missing, malformed, or expired token) on the same error envelope.
+     */
+    private void enableJwtResourceServer(OAuth2ResourceServerConfigurer<HttpSecurity> oauth2) {
+        oauth2
+            .jwt(Customizer.withDefaults())
+            .authenticationEntryPoint(this::respondUnauthenticated);
     }
 
     /** Routes security-layer failures through our standard {@link ErrorResponse} envelope. */
