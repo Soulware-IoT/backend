@@ -1,11 +1,16 @@
 package site.soulware.cocina360.shared.infrastructure.config;
 
+import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import org.springdoc.core.customizers.GlobalOpenApiCustomizer;
+import org.springdoc.core.utils.SpringDocUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import site.soulware.cocina360.shared.infrastructure.auth.CurrentUser;
 
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -20,28 +25,42 @@ import java.util.Set;
 @Configuration
 public class OpenApiConfig {
 
+    static {
+        // {@code @CurrentUser} parameters are resolved from the JWT, never sent by the client, so they
+        // must not appear as request parameters in the docs. Ignored globally for every endpoint.
+        SpringDocUtils.getConfig().addAnnotationsToIgnore(CurrentUser.class);
+    }
+
     /**
-     * Supplies the base {@link OpenAPI} document, seeding only the list of servers (springdoc fills
-     * in paths, schemas, etc.). The servers populate the "Servers" dropdown in Swagger UI and
-     * determine the base URL each "Try it out" request targets. <b>Order matters:</b> Swagger UI
-     * selects the first entry as the default, so {@code localServer} is listed first to make local
-     * development the default target, with the Railway deployment available as the second option.
+     * Supplies the base {@link OpenAPI} document (springdoc fills in paths, schemas, etc.). The single
+     * <b>relative</b> server ({@code "/"}) makes every "Try it out" request target the same origin that
+     * served the docs, so it works in any environment with no hardcoded host — and, being same-origin,
+     * bypasses CORS entirely. The only requirement to test in prod is opening Swagger on the backend's
+     * own public URL and pasting a valid JWT via "Authorize".
      *
-     * @return an OpenAPI document carrying the configured server list
+     * @return an OpenAPI document with the relative server and the bearer JWT scheme
      */
     @Bean
     public OpenAPI customOpenAPI() {
-        // The deployed (Railway) target — second in the list, so it is the non-default option.
-        Server productionServer = new Server()
-                .url("https://www.api.cocina360.soulware.site")
-                .description("Servidor de Producción (Render)");
+        // Relative server: Swagger calls whatever origin it was loaded from (same-origin, no CORS).
+        Server sameOriginServer = new Server()
+                .url("/")
+                .description("Server which Swagger is being loaded from");
 
-        // The local dev target — listed first below, so it is Swagger UI's default selection.
-        Server localServer = new Server()
-                .url("http://localhost:8080")
-                .description("Servidor Local");
+        // Bearer JWT scheme: surfaces the "Authorize" button in Swagger UI so the Supabase token can
+        // be pasted once and sent as `Authorization: Bearer <token>` on every "Try it out" request.
+        // Applied globally; /edge/** and /internal/** ignore it (they use X-Edge-Api-Key, not JWT).
+        String bearerScheme = "bearerAuth";
+        SecurityScheme jwtScheme = new SecurityScheme()
+                .name(bearerScheme)
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("bearer")
+                .bearerFormat("JWT");
 
-        return new OpenAPI().servers(List.of(localServer, productionServer));
+        return new OpenAPI()
+                .servers(List.of(sameOriginServer))
+                .components(new Components().addSecuritySchemes(bearerScheme, jwtScheme))
+                .addSecurityItem(new SecurityRequirement().addList(bearerScheme));
     }
 
     /**

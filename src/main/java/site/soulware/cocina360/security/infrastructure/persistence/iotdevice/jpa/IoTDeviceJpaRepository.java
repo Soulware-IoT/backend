@@ -13,4 +13,6 @@ public interface IoTDeviceJpaRepository extends JpaRepository<IoTDeviceJpaEntity
     List<IoTDeviceJpaEntity> findByOrganizationId(UUID organizationId);
 
     boolean existsByCode(String code);
+
+    long countByOrganizationId(UUID organizationId);
 }

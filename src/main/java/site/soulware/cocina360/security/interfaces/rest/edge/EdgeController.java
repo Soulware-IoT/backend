@@ -17,6 +17,8 @@ import site.soulware.cocina360.security.domain.model.query.GetDeviceRegistryQuer
 import site.soulware.cocina360.security.interfaces.rest.edge.request.RecordReadingsRequest;
 import site.soulware.cocina360.security.interfaces.rest.edge.response.EdgeIdentityResponse;
 import site.soulware.cocina360.security.interfaces.rest.edge.response.EdgeRegistryResponse;
+import site.soulware.cocina360.security.interfaces.rest.presence.DeviceKind;
+import site.soulware.cocina360.security.interfaces.rest.presence.DevicePresenceRegistry;
 
 /**
  * Edge-facing API: endpoints the edge device calls on behalf of the edge application,
@@ -31,15 +33,18 @@ public class EdgeController {
     private final EdgeDeviceQueryService edgeDeviceQueryService;
     private final IoTDeviceQueryService iotDeviceQueryService;
     private final ReadingCommandService readingCommandService;
+    private final DevicePresenceRegistry presenceRegistry;
 
     public EdgeController(
         EdgeDeviceQueryService edgeDeviceQueryService,
         IoTDeviceQueryService iotDeviceQueryService,
-        ReadingCommandService readingCommandService
+        ReadingCommandService readingCommandService,
+        DevicePresenceRegistry presenceRegistry
     ) {
         this.edgeDeviceQueryService = edgeDeviceQueryService;
         this.iotDeviceQueryService = iotDeviceQueryService;
         this.readingCommandService = readingCommandService;
+        this.presenceRegistry = presenceRegistry;
     }
 
     /**
@@ -52,14 +57,20 @@ public class EdgeController {
     public ResponseEntity<EdgeIdentityResponse> me(
         @RequestHeader(name = API_KEY_HEADER, required = false) String apiKey
     ) {
-        return ResponseEntity.ok(EdgeIdentityResponse.from(
-                this.edgeDeviceQueryService.handle(new AuthenticateEdgeQuery(apiKey))));
+        EdgeDeviceResult edge = this.edgeDeviceQueryService.handle(new AuthenticateEdgeQuery(apiKey));
+        this.touchEdge(edge);
+        return ResponseEntity.ok(EdgeIdentityResponse.from(edge));
     }
 
     /**
      * Registry pull: authenticate the calling edge, then return the in-service IoT devices
      * of its organization (with each device's apiKey and thresholds) for local replication.
      * The edge polls this to stay in sync; an unknown key yields 401 before any data.
+     *
+     * <p>Doubles as the liveness signal for the <b>edge only</b> — the registry lists
+     * devices by claim status, not physical reachability, so it says nothing about
+     * whether a device is actually powered on. Per-device liveness is derived from the
+     * readings each device forwards (see {@code ReadingPresenceListener}).
      *
      * @return 200 with the org's device registry; 401 if the key is missing or unrecognised.
      */
@@ -68,6 +79,7 @@ public class EdgeController {
         @RequestHeader(name = API_KEY_HEADER, required = false) String apiKey
     ) {
         EdgeDeviceResult edge = this.edgeDeviceQueryService.handle(new AuthenticateEdgeQuery(apiKey));
+        this.touchEdge(edge);
         return ResponseEntity.ok(EdgeRegistryResponse.of(
                 edge.organizationId(),
                 this.iotDeviceQueryService.handle(new GetDeviceRegistryQuery(edge.organizationId()))));
@@ -87,7 +99,12 @@ public class EdgeController {
         @RequestBody @Valid RecordReadingsRequest request
     ) {
         EdgeDeviceResult edge = this.edgeDeviceQueryService.handle(new AuthenticateEdgeQuery(apiKey));
+        this.touchEdge(edge);
         this.readingCommandService.handle(request.toCommand(edge.organizationId()));
         return ResponseEntity.accepted().build();
+    }
+
+    private void touchEdge(EdgeDeviceResult edge) {
+        this.presenceRegistry.touch(edge.organizationId(), edge.edgeDeviceId(), edge.code(), DeviceKind.EDGE);
     }
 }

@@ -28,20 +28,21 @@ public record UpdateIoTDeviceRequest(
     public enum Activation { ACTIVE, INACTIVE }
 
     public record Thresholds(
-        int warnTemperatureC,
-        int critTemperatureC,
-        double warnGasPpm,
-        double critGasPpm
-    ) {}
+        Temperature temperature,
+        Gas gas
+    ) {
+        public record Temperature(int warn, int crit) {}
+        public record Gas(double warn, double crit) {}
+    }
 
     public UpdateIoTDeviceCommand toCommand(UUID deviceId, UUID requesterId) {
         SafetyThresholds thresholds = this.thresholds == null
                 ? null
                 : new SafetyThresholds(
-                        this.thresholds.warnTemperatureC(),
-                        this.thresholds.critTemperatureC(),
-                        this.thresholds.warnGasPpm(),
-                        this.thresholds.critGasPpm());
+                        this.thresholds.temperature().warn(),
+                        this.thresholds.temperature().crit(),
+                        this.thresholds.gas().warn(),
+                        this.thresholds.gas().crit());
         Boolean activate = this.status == null ? null : this.status == Activation.ACTIVE;
         return new UpdateIoTDeviceCommand(deviceId, this.name, thresholds, activate, requesterId);
     }

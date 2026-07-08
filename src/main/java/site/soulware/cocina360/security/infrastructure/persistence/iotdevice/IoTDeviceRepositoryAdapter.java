@@ -59,6 +59,11 @@ public class IoTDeviceRepositoryAdapter implements IoTDeviceRepository {
         this.jpaRepository.deleteById(aggregate.getId().value());
     }
 
+    @Override
+    public long countByOrganizationId(OrganizationId organizationId) {
+        return this.jpaRepository.countByOrganizationId(organizationId.value());
+    }
+
     private IoTDeviceJpaEntity toJpaEntity(IoTDevice device) {
         SafetyThresholds thresholds = device.getThresholds();
         return new IoTDeviceJpaEntity(

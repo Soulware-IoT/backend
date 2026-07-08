@@ -13,4 +13,9 @@ public class OrganizationMemberNotFoundException extends EntityNotFoundException
     public static OrganizationMemberNotFoundException byId(UUID id) {
         return new OrganizationMemberNotFoundException("error.organization_member.not_found_by_id", id);
     }
+
+    public static OrganizationMemberNotFoundException byProfileInOrganization(UUID organizationId, UUID profileId) {
+        return new OrganizationMemberNotFoundException(
+                "error.organization_member.not_found_by_profile_in_organization", profileId, organizationId);
+    }
 }

@@ -3,6 +3,7 @@ package site.soulware.cocina360.organizations.infrastructure.persistence.organiz
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface OrganizationMemberJpaRepository extends JpaRepository<OrganizationMemberJpaEntity, UUID> {
@@ -10,4 +11,6 @@ public interface OrganizationMemberJpaRepository extends JpaRepository<Organizat
     List<OrganizationMemberJpaEntity> findAllByOrganizationId(UUID organizationId);
 
     List<OrganizationMemberJpaEntity> findAllByProfileId(UUID profileId);
+
+    Optional<OrganizationMemberJpaEntity> findByOrganizationIdAndProfileId(UUID organizationId, UUID profileId);
 }

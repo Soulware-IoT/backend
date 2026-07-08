@@ -11,8 +11,8 @@ public record UpdateMemberPermissionsRequest(
         @NotNull PermissionLevel organizations,
         @NotNull PermissionLevel internalControl
 ) {
-    public UpdateMemberPermissionsCommand toCommand(UUID organizationId, UUID memberId) {
-        return new UpdateMemberPermissionsCommand(organizationId, memberId,
+    public UpdateMemberPermissionsCommand toCommand(UUID organizationId, UUID memberId, UUID requesterId) {
+        return new UpdateMemberPermissionsCommand(organizationId, memberId, requesterId,
                 this.security, this.organizations, this.internalControl);
     }
 }

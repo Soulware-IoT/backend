@@ -7,10 +7,13 @@ import site.soulware.cocina360.shared.domain.model.valueobject.ProfileId;
 import site.soulware.cocina360.shared.domain.repository.DomainRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface OrganizationMemberRepository extends DomainRepository<OrganizationMember, OrganizationMemberId> {
 
     List<OrganizationMember> findAllByOrganizationId(OrganizationId organizationId);
 
     List<OrganizationMember> findAllByProfileId(ProfileId profileId);
+
+    Optional<OrganizationMember> findByOrganizationIdAndProfileId(OrganizationId organizationId, ProfileId profileId);
 }

@@ -25,11 +25,12 @@ public record IoTDeviceResponse(
 ) {
 
     public record Thresholds(
-        int warnTemperatureC,
-        int critTemperatureC,
-        double warnGasPpm,
-        double critGasPpm
-    ) {}
+        Temperature temperature,
+        Gas gas
+    ) {
+        public record Temperature(int warn, int crit) {}
+        public record Gas(double warn, double crit) {}
+    }
 
     public static IoTDeviceResponse from(IoTDeviceResult result) {
         return new IoTDeviceResponse(
@@ -39,10 +40,8 @@ public record IoTDeviceResponse(
                 result.name(),
                 result.status(),
                 new Thresholds(
-                        result.warnTemperatureC(),
-                        result.critTemperatureC(),
-                        result.warnGasPpm(),
-                        result.critGasPpm()),
+                        new Thresholds.Temperature(result.warnTemperatureC(), result.critTemperatureC()),
+                        new Thresholds.Gas(result.warnGasPpm(), result.critGasPpm())),
                 result.createdAt(),
                 result.createdBy(),
                 result.updatedAt(),
