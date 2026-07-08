@@ -49,7 +49,9 @@ public class ReadingCommandService {
 
             Reading reading = Reading.record(
                     ReadingId.generate(),
+                    device.getOrganizationId(),
                     device.getId(),
+                    device.getCode(),
                     entry.temperatureC(),
                     entry.gasPpm(),
                     entry.severity(),

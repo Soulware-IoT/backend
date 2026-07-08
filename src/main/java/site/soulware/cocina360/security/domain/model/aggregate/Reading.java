@@ -1,17 +1,22 @@
 package site.soulware.cocina360.security.domain.model.aggregate;
 
 import site.soulware.cocina360.security.domain.model.event.CriticalReadingDetected;
+import site.soulware.cocina360.security.domain.model.event.ReadingRecorded;
+import site.soulware.cocina360.security.domain.model.valueobject.IoTDeviceCode;
 import site.soulware.cocina360.security.domain.model.valueobject.IoTDeviceId;
 import site.soulware.cocina360.security.domain.model.valueobject.ReadingId;
 import site.soulware.cocina360.security.domain.model.valueobject.SafetySeverity;
 import site.soulware.cocina360.shared.domain.model.aggregate.AggregateRoot;
+import site.soulware.cocina360.shared.domain.model.valueobject.OrganizationId;
 
 import java.time.Instant;
 
 /**
- * A single entry in the sparse safety ledger. Readings are not the device's 5s
- * tick — the edge forwards one only when the safety state changes, so each row is
- * a meaningful transition. A {@code CRITICAL} reading raises
+ * A single entry in the safety ledger. The device reports on a fixed ~5s tick and the
+ * edge forwards every buffered reading, so the ledger is a continuous telemetry stream
+ * — which is also why device liveness can be derived from it (see the presence
+ * tracker). Every recording raises {@link ReadingRecorded} for live telemetry
+ * consumers; a {@code CRITICAL} reading additionally raises
  * {@link CriticalReadingDetected} to drive alerts/notifications.
  *
  * @param occurredAt when the reading happened at the edge/iot-device
@@ -47,7 +52,9 @@ public class Reading extends AggregateRoot<ReadingId> {
 
     public static Reading record(
         ReadingId id,
+        OrganizationId organizationId,
         IoTDeviceId deviceId,
+        IoTDeviceCode deviceCode,
         int temperatureC,
         double gasPpm,
         SafetySeverity severity,
@@ -55,6 +62,9 @@ public class Reading extends AggregateRoot<ReadingId> {
     ) {
         Reading reading = new Reading(
                 id, deviceId, temperatureC, gasPpm, severity, occurredAt, Instant.now());
+        reading.registerEvent(new ReadingRecorded(
+                organizationId.value(), id.value(), deviceId.value(), deviceCode.value(),
+                temperatureC, gasPpm, severity, occurredAt, reading.recordedAt));
         if (severity == SafetySeverity.CRITICAL) {
             reading.registerEvent(new CriticalReadingDetected(
                     id.value(), deviceId.value(), temperatureC, gasPpm, reading.recordedAt));

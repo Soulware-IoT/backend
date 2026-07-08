@@ -1,5 +1,7 @@
 package site.soulware.cocina360.shared.infrastructure.rest;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -7,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import site.soulware.cocina360.shared.infrastructure.rest.i18n.MessageResolver;
 import site.soulware.cocina360.shared.infrastructure.rest.response.ErrorResponse;
@@ -21,6 +24,8 @@ import java.util.stream.Collectors;
 @Order(Ordered.LOWEST_PRECEDENCE)
 @RestControllerAdvice
 public class WebExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(WebExceptionHandler.class);
 
     private final MessageResolver messages;
 
@@ -45,6 +50,18 @@ public class WebExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ErrorResponse.of(400, "Bad Request", message));
+    }
+
+    /**
+     * A streaming client (e.g. an SSE subscriber) went away mid-response: the response is
+     * committed and unusable, so there is nothing to write and nobody to write it to.
+     * Handled quietly — without this, the {@code Exception} catch-all would try to write
+     * a JSON error body into the dead event-stream response and fail loudly on every
+     * disconnect.
+     */
+    @ExceptionHandler(AsyncRequestNotUsableException.class)
+    public void handle(AsyncRequestNotUsableException ex) {
+        log.debug("Async response no longer usable (client disconnected): {}", ex.getMessage());
     }
 
     @ExceptionHandler(Exception.class)

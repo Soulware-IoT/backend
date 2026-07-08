@@ -19,7 +19,7 @@ import java.util.UUID;
  * body.
  */
 public record RecordReadingsRequest(
-    @NotEmpty @Valid List<Reading> readings
+    @NotEmpty List<@Valid Reading> readings
 ) {
 
     public record Reading(
