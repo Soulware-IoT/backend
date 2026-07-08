@@ -11,6 +11,7 @@ import java.util.UUID;
  */
 public record EdgeIdentityResponse(
     UUID id,
+    String code,
     UUID organizationId,
     String name,
     EdgeDeviceStatus status
@@ -19,6 +20,7 @@ public record EdgeIdentityResponse(
     public static EdgeIdentityResponse from(EdgeDeviceResult result) {
         return new EdgeIdentityResponse(
                 result.edgeDeviceId(),
+                result.code(),
                 result.organizationId(),
                 result.name(),
                 result.status()
